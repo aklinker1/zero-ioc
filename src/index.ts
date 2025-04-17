@@ -24,6 +24,13 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
 
 /**
  * Creates an empty {@link IocContainer} for registering and injecting dependencies.
+ *
+ * @example
+ * ```ts
+ * const container = createIocContainer()
+ *   .register({ db: Database })
+ *   .register({ userRepo: createUserRepo })
+ * ```
  */
 export function createIocContainer(): IocContainer<{}> {
   const factories: Record<string, Factory<any>> = {};
@@ -76,16 +83,49 @@ export type ToDependencies<T extends Record<string, (...args: any[]) => any>> =
     [key in keyof T]: T[key] extends (...args: any[]) => infer R ? R : never;
   };
 
+/**
+ * A factory is a function or class with dependencies.
+ */
 export type Factory<RegisteredFactories extends Record<string, any>> =
   | FactoryFunction<RegisteredFactories>
   | FactoryClass<RegisteredFactories>;
+/**
+ * A factory function is a function that takes dependencies as the first
+ * argument and returns an instance of a service.
+ */
 export type FactoryFunction<RegisteredFactories extends Record<string, any>> = (
   deps: ToDependencies<RegisteredFactories>,
 ) => any;
+/**
+ * A factory class is a class that takes dependencies as the first argument of
+ * it's constructor.
+ */
 export type FactoryClass<RegisteredFactories extends Record<string, any>> = {
   new (deps: ToDependencies<RegisteredFactories>): any;
 };
 
+/**
+ * Sometimes services need additional parameters passed in that aren't
+ * dependencies. You can use this function to inject additional parameters into
+ * the factory's first argument.
+ *
+ * @example
+ * ```ts
+ * class Database {
+ *   constructor(
+ *     private deps: { username: string, password: string },
+ *   ) {}
+ * }
+ *
+ * const container = createIocContainer()
+ *   .register({
+ *     db: parameterize(Database, {
+ *       username: 'root',
+ *       password: 'root'
+ *     })
+ *   })
+ * ```
+ */
 export function parameterize<
   Parameters extends Record<string, any>,
   Dependencies extends Record<string, any>,
