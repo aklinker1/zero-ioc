@@ -51,16 +51,6 @@ And finally, to get an instance of a service from the container, use `resolve`:
 const userService = container.resolve("userService");
 ```
 
-## Access All Registered Services
-
-To access an object containing all registered services, you can use the readonly `registrations` property:
-
-```ts
-const { userRepo, userService } = container.registrations;
-```
-
-> This object is actually the same proxy passed as the first argument to factories containing all the available services.
-
 ## Register Order
 
 You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` in a separate call to `register` before registering `userRepo`.
@@ -70,6 +60,19 @@ Good news is TypeScript will tell you if you messed this up! If you haven't regi
 <img width="500" alt="Example type error" src="https://github.com/aklinker1/zero-ioc/raw/main/.github/dependency-type-error.png">
 
 Additionally, thanks to this type-safety, TypeScript will also report an error for circular dependencies!
+
+## Access All Registered Services
+
+To access an object containing all registered services, you have two options:
+
+1. `container.registrations`: This is a proxy object, and services will be resolved lazily when you access them.
+   ```ts
+   const { userRepo, userService } = container.registrations;
+   ```
+2. `container.resolveAll()`: Immediately resolve all registered services and return them as a plain object, no proxy magic. Useful when passing services to a third-party library that doesn't support proxies.
+   ```ts
+   const { userRepo, userService } = container.resolveAll();
+   ```
 
 ## Paramaterization
 

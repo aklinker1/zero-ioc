@@ -146,4 +146,31 @@ describe("IoC Container", () => {
       'Service "other" not found',
     );
   });
+
+  it("should resolve all registered services", () => {
+    class Database {}
+    class UserRepo {
+      constructor(private deps: { db: Database }) {}
+    }
+    class DocumentRepo {
+      constructor(private deps: { db: Database }) {}
+    }
+
+    const services = createIocContainer()
+      .register({
+        db: Database,
+      })
+      .register({
+        userRepo: UserRepo,
+        documentRepo: DocumentRepo,
+      })
+      .resolveAll();
+
+    expect(services.db).toBeInstanceOf(Database);
+    expect(services.userRepo).toBeInstanceOf(UserRepo);
+    expect(services.documentRepo).toBeInstanceOf(DocumentRepo);
+
+    // @ts-expect-error: Purposefully accessing a non-existent service
+    expect(services.other).toBeUndefined();
+  });
 });

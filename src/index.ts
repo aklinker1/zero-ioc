@@ -42,6 +42,17 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    * ```
    */
   registrations: Readonly<ToDependencies<RegisteredFactories>>;
+
+  /**
+   * Resolves all dependencies immediately and returns an object containing
+   * them. This differs from {@link IocContainer#registrations} because it
+   * resolves all dependencies when called, instead of waiting for a service to
+   * be accessed.
+   *
+   * Can be useful if a library doesn't work well with Proxies, and you need a
+   * real object containing all dependencies.
+   */
+  resolveAll(): ToDependencies<RegisteredFactories>;
 };
 
 /**
@@ -88,6 +99,15 @@ export function createIocContainer(): IocContainer<{}> {
     },
     get registrations() {
       return resolveProxy;
+    },
+    resolveAll() {
+      return Object.keys(factories).reduce(
+        (acc, key) => {
+          acc[key] = container.resolve(key);
+          return acc;
+        },
+        {} as Record<string, any>,
+      );
     },
   };
 
