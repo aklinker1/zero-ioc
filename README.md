@@ -1,4 +1,4 @@
-# `@aklinker1/ioc-container`
+# `@aklinker1/zero-ioc`
 
 Zero dependency, type-safe Inversion of Control (IoC) container. Designed specifically for use with singleton services, as I do on my personal projects.
 
