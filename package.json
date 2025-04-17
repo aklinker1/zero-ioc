@@ -1,6 +1,6 @@
 {
   "name": "@aklinker1/zero-ioc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "packageManager": "bun@1.2.9",
   "scripts": {
     "test": "bun test --watch",
