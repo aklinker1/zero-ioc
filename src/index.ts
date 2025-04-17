@@ -1,5 +1,5 @@
 /**
- * Iversion of control (IoC) container that lets you register and resolve
+ * Inversion of Control (IoC) container that lets you register and resolve
  * dependencies.
  */
 export type IocContainer<Factories extends Record<string, any>> = {
