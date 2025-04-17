@@ -93,20 +93,29 @@ describe("IoC Container", () => {
       }
     }
 
-    const createUserRepo = (deps: { db: Database }) => ({
-      list: () => deps.db.query("user"),
+    const createUserRepo = (deps: { db: Database; id: number }) => ({
+      list: () => deps.db.query("user" + deps.id),
     });
     const createDocumentRepo = (deps: { db: Database }) => ({
       list: () => deps.db.query("document"),
     });
 
     const container = createIocContainer()
-      .register({ db: parameterize(Database, { param: "test" }) })
-      .register({ userRepo: createUserRepo, documentRepo: createDocumentRepo });
+      .register({
+        db: parameterize(Database, {
+          param: "test",
+        }),
+      })
+      .register({
+        userRepo: parameterize(createUserRepo, {
+          id: 3,
+        }),
+        documentRepo: createDocumentRepo,
+      });
     const userRepo = container.resolve("userRepo");
     const documentRepo = container.resolve("documentRepo");
 
-    expect(userRepo.list()).toEqual(["one", "two", "user", "test"]);
+    expect(userRepo.list()).toEqual(["one", "two", "user3", "test"]);
     expect(documentRepo.list()).toEqual(["one", "two", "document", "test"]);
   });
 });
