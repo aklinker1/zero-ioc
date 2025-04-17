@@ -1,7 +1,15 @@
 {
   "name": "@aklinker1/zero-ioc",
+  "version": "1.0.0",
   "packageManager": "bun@1.2.9",
-  "type": "module",
+  "scripts": {
+    "test": "bun test --watch",
+    "build": "bun build src/index.ts --outdir dist && tsc -p tsconfig.build.json",
+    "publish:all": "bun run publish:npm && bun run publish:jsr",
+    "publish:jsr": "bunx jsr publish",
+    "publish:npm": "bun publish",
+    "prepublishOnly": "bun check && bun run build"
+  },
   "devDependencies": {
     "@aklinker1/check": "^1.4.5",
     "@types/bun": "latest",
@@ -9,5 +17,31 @@
     "prettier": "^3.5.3",
     "publint": "^0.3.12",
     "typescript": "^5.0.0"
+  },
+  "description": "Zero dependency, type-safe IoC container",
+  "license": "MIT",
+  "author": {
+    "email": "aaronklinker1@gmail.com",
+    "name": "Aaron Klinker"
+  },
+  "homepage": "https://jsr.io/@aklinker1/zero-ioc",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/aklinker1/zero-ioc.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

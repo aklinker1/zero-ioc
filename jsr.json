@@ -1,0 +1,10 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@aklinker1/zero-ioc",
+  "version": "1.0.0",
+  "exports": "./src/index.ts",
+  "publish": {
+    "include": ["src", "README.md"],
+    "exclude": ["**/__tests__/**", "**/*.test.ts"]
+  }
+}
