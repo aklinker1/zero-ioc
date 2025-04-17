@@ -8,7 +8,7 @@
     "publish:all": "bun run publish:npm && bun run publish:jsr",
     "publish:jsr": "bunx jsr publish",
     "publish:npm": "bun publish",
-    "prepublishOnly": "bun check && bun run build"
+    "prepublishOnly": "bun check && bun test && bun run build"
   },
   "devDependencies": {
     "@aklinker1/check": "^1.4.5",
