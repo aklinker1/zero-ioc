@@ -47,6 +47,16 @@ export const container = createIocContainer()
 const userService = container.resolve("userService");
 ```
 
+## Access All Registered Services
+
+To access an object containing all registered services, you can use the readonly `registrations` property:
+
+```ts
+const { userRepo, userService } = container.registrations;
+```
+
+> This object is actually the same proxy passed as the first argument to factories containing all the available services.
+
 ## Register Order
 
 You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` in a separate call to `register` before registering `userRepo`.
