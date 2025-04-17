@@ -69,6 +69,10 @@ Additionally, thanks to this type-safety, TypeScript will also report an error f
 
 ## Paramaterization
 
+Sometimes you need to pass additional parameters to a service, like config, that's not a previously registered service.
+
+In this case, you should use the `parameterize` function! Any parameters passed in via the second argument don't need to be registered beforehand!
+
 ```ts
 const openDatabase = (deps: {
   username: string;
