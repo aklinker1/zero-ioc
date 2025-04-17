@@ -43,7 +43,11 @@ export const container = createIocContainer()
   .register({ db: openDatabase })
   .register({ userRepo: createUserRepo })
   .register({ userService: UserService });
+```
 
+And finally, to get an instance of a service from the container, use `resolve`:
+
+```ts
 const userService = container.resolve("userService");
 ```
 
