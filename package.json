@@ -1,0 +1,13 @@
+{
+  "name": "@aklinker1/zero-ioc",
+  "packageManager": "bun@1.2.9",
+  "type": "module",
+  "devDependencies": {
+    "@aklinker1/check": "^1.4.5",
+    "@types/bun": "latest",
+    "oxlint": "^0.16.6",
+    "prettier": "^3.5.3",
+    "publint": "^0.3.12",
+    "typescript": "^5.0.0"
+  }
+}
