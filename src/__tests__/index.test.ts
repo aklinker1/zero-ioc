@@ -137,11 +137,13 @@ describe("IoC Container", () => {
         documentRepo: DocumentRepo,
       });
 
-    expect(container.all.db).toBeInstanceOf(Database);
-    expect(container.all.userRepo).toBeInstanceOf(UserRepo);
-    expect(container.all.documentRepo).toBeInstanceOf(DocumentRepo);
+    expect(container.registrations.db).toBeInstanceOf(Database);
+    expect(container.registrations.userRepo).toBeInstanceOf(UserRepo);
+    expect(container.registrations.documentRepo).toBeInstanceOf(DocumentRepo);
 
     // @ts-expect-error: Purposefully accessing a non-existent service
-    expect(() => container.all.other).toThrow('Service "other" not found');
+    expect(() => container.registrations.other).toThrow(
+      'Service "other" not found',
+    );
   });
 });
