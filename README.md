@@ -1,8 +1,6 @@
 # `@aklinker1/zero-ioc`
 
-[![JSR](https://jsr.io/badges/@aklinker1/zero-ioc)](https://jsr.io/@aklinker1/zero-ioc) [![NPM Version](https://img.shields.io/npm/v/%40aklinker1%2Fzero-ioc?logo=npm&labelColor=red&color=white)](https://www.npmjs.com/package/@aklinker1/zero-ioc) [![Docs](https://img.shields.io/badge/Docs-blue?logo=readme&logoColor=white
-)](https://jsr.io/@aklinker1/zero-ioc)  [![API Reference](https://img.shields.io/badge/API%20Reference-blue?logo=readme&logoColor=white
-)](https://jsr.io/@aklinker1/zero-ioc/doc) [![License](https://img.shields.io/npm/l/%40aklinker1%2Fzero-ioc)](https://github.com/aklinker1/zero-ioc/blob/main/LICENSE)
+[![JSR](https://jsr.io/badges/@aklinker1/zero-ioc)](https://jsr.io/@aklinker1/zero-ioc) [![NPM Version](https://img.shields.io/npm/v/%40aklinker1%2Fzero-ioc?logo=npm&labelColor=red&color=white)](https://www.npmjs.com/package/@aklinker1/zero-ioc) [![Docs](https://img.shields.io/badge/Docs-blue?logo=readme&logoColor=white)](https://jsr.io/@aklinker1/zero-ioc) [![API Reference](https://img.shields.io/badge/API%20Reference-blue?logo=readme&logoColor=white)](https://jsr.io/@aklinker1/zero-ioc/doc) [![License](https://img.shields.io/npm/l/%40aklinker1%2Fzero-ioc)](https://github.com/aklinker1/zero-ioc/blob/main/LICENSE)
 
 Zero dependency, type-safe Inversion of Control (IoC) container. Designed specifically for use with singleton services, as I use in my personal projects.
 
@@ -62,11 +60,17 @@ Additionally, thanks to this type-safety, TypeScript will also report an error f
 ## Paramaterization
 
 ```ts
-const openDatabase = (username: string, password: string) => (): Database => {
+const openDatabase = (deps: {
+  username: string;
+  password: string;
+}): Database => {
   // ...
 };
 
 const container = createIocContainer().register({
-  db: openDatabase(process.env.DB_USERNAME, process.env.DB_PASSWORD),
+  db: parameterize(openDatabase, {
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+  }),
 });
 ```

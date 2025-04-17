@@ -1,5 +1,5 @@
 import { describe, it, expect, mock } from "bun:test";
-import { createIocContainer } from "..";
+import { parameterize, createIocContainer } from "..";
 
 describe("IoC Container", () => {
   it("should construct a dependency tree", () => {
@@ -82,5 +82,31 @@ describe("IoC Container", () => {
 
     expect(userRepo.list()).toEqual(["one", "two", "user"]);
     expect(documentRepo.list()).toEqual(["one", "two", "document"]);
+  });
+
+  it("should support building factories with parameterization", () => {
+    class Database {
+      constructor(private deps: { param: string }) {}
+
+      query(from: string) {
+        return ["one", "two", from, this.deps.param];
+      }
+    }
+
+    const createUserRepo = (deps: { db: Database }) => ({
+      list: () => deps.db.query("user"),
+    });
+    const createDocumentRepo = (deps: { db: Database }) => ({
+      list: () => deps.db.query("document"),
+    });
+
+    const container = createIocContainer()
+      .register({ db: parameterize(Database, { param: "test" }) })
+      .register({ userRepo: createUserRepo, documentRepo: createDocumentRepo });
+    const userRepo = container.resolve("userRepo");
+    const documentRepo = container.resolve("documentRepo");
+
+    expect(userRepo.list()).toEqual(["one", "two", "user", "test"]);
+    expect(documentRepo.list()).toEqual(["one", "two", "document", "test"]);
   });
 });
