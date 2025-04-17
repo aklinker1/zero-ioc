@@ -16,10 +16,32 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
   /**
    * Get an already instantiated service or create a new instance of one. When
    * creating an instance, all dependencies it relies on are also resolved.
+   *
+   * Attempting to resolve a key that has not been registered will throw an error.
    */
   resolve<Key extends keyof RegisteredFactories>(
     key: Key,
   ): ReturnType<RegisteredFactories[Key]>;
+
+  /**
+   * A proxy object giving you access to all registered services. It can be
+   * destructured. When you access a service from this object, its the same
+   * thing as calling `resolve` with the key.
+   *
+   * Accessing an unregistered key will throw an error just like `resolve`.
+   *
+   * > This is the same proxy object passed as the first argument to factory functions!
+   *
+   * @example
+   * ```ts
+   * const container = createIocContainer()
+   *   .register({ db: Database })
+   *   .register({ userRepo: createUserRepo })
+   *
+   * const { db, userRepo } = container.registrations;
+   * ```
+   */
+  registrations: Readonly<ToDependencies<RegisteredFactories>>;
 };
 
 /**
@@ -63,6 +85,9 @@ export function createIocContainer(): IocContainer<{}> {
       if (!factory) throw Error(`Service "${key}" not found`);
 
       return (instanceCache[key] = callFactory(factory, resolveProxy));
+    },
+    get registrations() {
+      return resolveProxy;
     },
   };
 

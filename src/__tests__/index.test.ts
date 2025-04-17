@@ -118,4 +118,30 @@ describe("IoC Container", () => {
     expect(userRepo.list()).toEqual(["one", "two", "user3", "test"]);
     expect(documentRepo.list()).toEqual(["one", "two", "document", "test"]);
   });
+
+  it("should provide get access to all registered services", () => {
+    class Database {}
+    class UserRepo {
+      constructor(private deps: { db: Database }) {}
+    }
+    class DocumentRepo {
+      constructor(private deps: { db: Database }) {}
+    }
+
+    const container = createIocContainer()
+      .register({
+        db: Database,
+      })
+      .register({
+        userRepo: UserRepo,
+        documentRepo: DocumentRepo,
+      });
+
+    expect(container.all.db).toBeInstanceOf(Database);
+    expect(container.all.userRepo).toBeInstanceOf(UserRepo);
+    expect(container.all.documentRepo).toBeInstanceOf(DocumentRepo);
+
+    // @ts-expect-error: Purposefully accessing a non-existent service
+    expect(() => container.all.other).toThrow('Service "other" not found');
+  });
 });
