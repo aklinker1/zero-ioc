@@ -120,7 +120,9 @@ describe("IoC Container", () => {
   });
 
   it("should provide get access to all registered services", () => {
-    class Database {}
+    type Database = {};
+    const openDatabase = (): Database => ({});
+
     class UserRepo {
       constructor(private deps: { db: Database }) {}
     }
@@ -130,17 +132,16 @@ describe("IoC Container", () => {
 
     const container = createIocContainer()
       .register({
-        db: Database,
+        db: openDatabase,
       })
       .register({
         userRepo: UserRepo,
         documentRepo: DocumentRepo,
       });
 
-    expect(container.registrations.db).toBeInstanceOf(Database);
+    expect(container.registrations.db).toBeDefined();
     expect(container.registrations.userRepo).toBeInstanceOf(UserRepo);
     expect(container.registrations.documentRepo).toBeInstanceOf(DocumentRepo);
-
     // @ts-expect-error: Purposefully accessing a non-existent service
     expect(() => container.registrations.other).toThrow(
       'Service "other" not found',
@@ -148,7 +149,9 @@ describe("IoC Container", () => {
   });
 
   it("should resolve all registered services", () => {
-    class Database {}
+    type Database = {};
+    const openDatabase = (): Database => ({});
+
     class UserRepo {
       constructor(private deps: { db: Database }) {}
     }
@@ -158,7 +161,7 @@ describe("IoC Container", () => {
 
     const services = createIocContainer()
       .register({
-        db: Database,
+        db: openDatabase,
       })
       .register({
         userRepo: UserRepo,
@@ -166,10 +169,9 @@ describe("IoC Container", () => {
       })
       .resolveAll();
 
-    expect(services.db).toBeInstanceOf(Database);
+    expect(services.db).toBeDefined();
     expect(services.userRepo).toBeInstanceOf(UserRepo);
     expect(services.documentRepo).toBeInstanceOf(DocumentRepo);
-
     // @ts-expect-error: Purposefully accessing a non-existent service
     expect(services.other).toBeUndefined();
   });

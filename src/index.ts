@@ -11,7 +11,16 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    */
   register<NewFactories extends Record<string, Factory<RegisteredFactories>>>(
     factories: NewFactories,
-  ): IocContainer<RegisteredFactories & NewFactories>;
+  ): IocContainer<{
+    // Equivalent to `RegisteredFactories & NewFactories`, but types look nicer in IDE and error messages
+    [key in
+      | keyof RegisteredFactories
+      | keyof NewFactories]: key extends keyof NewFactories
+      ? NewFactories[key]
+      : key extends keyof RegisteredFactories
+        ? RegisteredFactories[key]
+        : never;
+  }>;
 
   /**
    * Get an already instantiated service or create a new instance of one. When
@@ -41,7 +50,14 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    * const { db, userRepo } = container.registrations;
    * ```
    */
-  registrations: Readonly<ToDependencies<RegisteredFactories>>;
+  registrations: Readonly<{
+    // Inline version of ToDependencies so types look better in IDE and error messages
+    [key in keyof RegisteredFactories]: RegisteredFactories[key] extends FactoryFunction<RegisteredFactories>
+      ? ReturnType<RegisteredFactories[key]>
+      : RegisteredFactories[key] extends FactoryClass<RegisteredFactories>
+        ? InstanceType<RegisteredFactories[key]>
+        : never;
+  }>;
 
   /**
    * Resolves all dependencies immediately and returns an object containing
@@ -52,7 +68,14 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    * Can be useful if a library doesn't work well with Proxies, and you need a
    * real object containing all dependencies.
    */
-  resolveAll(): ToDependencies<RegisteredFactories>;
+  resolveAll(): {
+    // Inline version of ToDependencies so types look better in IDE and error messages
+    [key in keyof RegisteredFactories]: RegisteredFactories[key] extends FactoryFunction<RegisteredFactories>
+      ? ReturnType<RegisteredFactories[key]>
+      : RegisteredFactories[key] extends FactoryClass<RegisteredFactories>
+        ? InstanceType<RegisteredFactories[key]>
+        : never;
+  };
 };
 
 /**
@@ -125,7 +148,11 @@ function isClass(obj: any): obj is { new (...args: any[]): any } {
 /** Converts a Record of factory functions and classes to a map of their return type and instance type respectively. */
 export type ToDependencies<T extends Record<string, (...args: any[]) => any>> =
   {
-    [key in keyof T]: T[key] extends (...args: any[]) => infer R ? R : never;
+    [key in keyof T]: T[key] extends FactoryFunction<T>
+      ? ReturnType<T[key]>
+      : T[key] extends FactoryClass<T>
+        ? InstanceType<T[key]>
+        : never;
   };
 
 /**
