@@ -1,5 +1,9 @@
 # `@aklinker1/zero-ioc`
 
+[![JSR](https://jsr.io/badges/@aklinker1/zero-ioc)](https://jsr.io/@aklinker1/zero-ioc) [![NPM Version](https://img.shields.io/npm/v/%40aklinker1%2Fzero-ioc?logo=npm&labelColor=red&color=white)](https://www.npmjs.com/package/@aklinker1/zero-ioc) [![Docs](https://img.shields.io/badge/Docs-blue?logo=readme&logoColor=white
+)](https://jsr.io/@aklinker1/zero-ioc)  [![API Reference](https://img.shields.io/badge/API%20Reference-blue?logo=readme&logoColor=white
+)](https://jsr.io/@aklinker1/zero-ioc/doc) [![License](https://img.shields.io/npm/l/%40aklinker1%2Fzero-ioc)](https://github.com/aklinker1/zero-ioc/blob/main/LICENSE)
+
 Zero dependency, type-safe Inversion of Control (IoC) container. Designed specifically for use with singleton services, as I do on my personal projects.
 
 ## Usage
@@ -28,7 +32,7 @@ export class UserService {
 }
 ```
 
-Once your services are created, you can register them on a container:
+Once your services are defined, you can register them on a container:
 
 ```ts
 // main.ts
@@ -44,12 +48,15 @@ export const container = new IoCContainer()
 const userService = container.resolve("userService");
 ```
 
-> [!DANGER]
-> You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` in a separate call to `register` before registering `userRepo`.
->
-> ![Example type error](./.github/dependency-type-error.png)
->
-> Good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it. Additionally, thanks to the type-safety, TypeScript will also report an error for circular dependencies!
+## Register Order
+
+You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` in a separate call to `register` before registering `userRepo`.
+
+Good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
+
+<img width="500" alt="Example type error" src="https://github.com/aklinker1/zero-ioc/raw/main/.github/dependency-type-error.png">
+
+Additionally, thanks to this type-safety, TypeScript will also report an error for circular dependencies!
 
 ## Paramaterization
 
