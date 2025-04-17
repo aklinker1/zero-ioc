@@ -39,9 +39,9 @@ Once your services are defined, you can register them on a container:
 import { openDatabase } from "./database";
 import { createUserRepo } from "./user-repo";
 import { UserService } from "./user-service";
-import { createContainer } from "@aklinker1/zero-ioc";
+import { createIocContainer } from "@aklinker1/zero-ioc";
 
-export const container = new IoCContainer()
+export const container = createIocContainer()
   .register({ db: openDatabase })
   .register({ userRepo: createUserRepo })
   .register({ userService: UserService });
