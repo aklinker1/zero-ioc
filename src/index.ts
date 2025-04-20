@@ -2,23 +2,28 @@
  * Inversion of Control (IoC) container that lets you register and resolve
  * dependencies.
  */
-export type IocContainer<RegisteredFactories extends Record<string, any>> = {
+export type IocContainer<TFactories extends Record<string, any>> = {
   /**
    * Add one or more services to the container.
    * Any dependencies of the registered services must have been registered in a
    * previous call to `register`, or else you will get a type error. This makes
    * it impossible to accidentally create a circular dependency.
    */
-  register<NewFactories extends Record<string, Factory<RegisteredFactories>>>(
-    factories: NewFactories,
+  register<
+    TNewFactories extends Record<
+      string,
+      Factory<{ [key in keyof TFactories]: GetInstance<TFactories[key]> }, any>
+    >,
+  >(
+    factories: TNewFactories,
   ): IocContainer<{
-    // Equivalent to `RegisteredFactories & NewFactories`, but types look nicer in IDE and error messages
+    // Equivalent to `TFactories & TNewFactories`, but types look nicer in IDE and error messages
     [key in
-      | keyof RegisteredFactories
-      | keyof NewFactories]: key extends keyof NewFactories
-      ? NewFactories[key]
-      : key extends keyof RegisteredFactories
-        ? RegisteredFactories[key]
+      | keyof TFactories
+      | keyof TNewFactories]: key extends keyof TNewFactories
+      ? TNewFactories[key]
+      : key extends keyof TFactories
+        ? TFactories[key]
         : never;
   }>;
 
@@ -28,9 +33,7 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    *
    * Attempting to resolve a key that has not been registered will throw an error.
    */
-  resolve<Key extends keyof RegisteredFactories>(
-    key: Key,
-  ): ReturnType<RegisteredFactories[Key]>;
+  resolve<Key extends keyof TFactories>(key: Key): GetInstance<TFactories[Key]>;
 
   /**
    * A proxy object giving you access to all registered services. It can be
@@ -51,12 +54,7 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    * ```
    */
   registrations: Readonly<{
-    // Inline version of ToDependencies so types look better in IDE and error messages
-    [key in keyof RegisteredFactories]: RegisteredFactories[key] extends FactoryFunction<RegisteredFactories>
-      ? ReturnType<RegisteredFactories[key]>
-      : RegisteredFactories[key] extends FactoryClass<RegisteredFactories>
-        ? InstanceType<RegisteredFactories[key]>
-        : never;
+    [key in keyof TFactories]: GetInstance<TFactories[key]>;
   }>;
 
   /**
@@ -68,14 +66,7 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
    * Can be useful if a library doesn't work well with Proxies, and you need a
    * real object containing all dependencies.
    */
-  resolveAll(): {
-    // Inline version of ToDependencies so types look better in IDE and error messages
-    [key in keyof RegisteredFactories]: RegisteredFactories[key] extends FactoryFunction<RegisteredFactories>
-      ? ReturnType<RegisteredFactories[key]>
-      : RegisteredFactories[key] extends FactoryClass<RegisteredFactories>
-        ? InstanceType<RegisteredFactories[key]>
-        : never;
-  };
+  resolveAll(): { [key in keyof TFactories]: GetInstance<TFactories[key]> };
 };
 
 /**
@@ -89,7 +80,7 @@ export type IocContainer<RegisteredFactories extends Record<string, any>> = {
  * ```
  */
 export function createIocContainer(): IocContainer<{}> {
-  const factories: Record<string, Factory<any>> = {};
+  const factories: Record<string, Factory<any, any>> = {};
   const instanceCache: Record<string, any> = {};
 
   const resolveProxy = new Proxy(
@@ -111,14 +102,16 @@ export function createIocContainer(): IocContainer<{}> {
       }
       return container;
     },
-    resolve(_key) {
-      const key = _key as string;
-      if (instanceCache[key]) return instanceCache[key];
+    resolve(key) {
+      if (instanceCache[key as string]) return instanceCache[key as string];
 
-      const factory = factories[key];
-      if (!factory) throw Error(`Service "${key}" not found`);
+      const factory = factories[key as string];
+      if (!factory) throw Error(`Service "${key as string}" not found`);
 
-      return (instanceCache[key] = callFactory(factory, resolveProxy));
+      return (instanceCache[key as string] = instantiate(
+        factory,
+        resolveProxy,
+      ));
     },
     get registrations() {
       return resolveProxy;
@@ -137,7 +130,10 @@ export function createIocContainer(): IocContainer<{}> {
   return container;
 }
 
-function callFactory(factory: Factory<any>, deps: any) {
+function instantiate<TFactory extends Factory<any, any>>(
+  factory: TFactory,
+  deps: any,
+): GetInstance<TFactory> {
   return isClass(factory) ? new factory(deps) : factory(deps);
 }
 
@@ -145,36 +141,47 @@ function isClass(obj: any): obj is { new (...args: any[]): any } {
   return typeof obj === "function" && !!obj.prototype?.constructor;
 }
 
-/** Converts a Record of factory functions and classes to a map of their return type and instance type respectively. */
-export type ToDependencies<T extends Record<string, (...args: any[]) => any>> =
-  {
-    [key in keyof T]: T[key] extends FactoryFunction<T>
-      ? ReturnType<T[key]>
-      : T[key] extends FactoryClass<T>
-        ? InstanceType<T[key]>
-        : never;
-  };
-
 /**
  * A factory is a function or class with dependencies.
  */
-export type Factory<RegisteredFactories extends Record<string, any>> =
-  | FactoryFunction<RegisteredFactories>
-  | FactoryClass<RegisteredFactories>;
+export type Factory<TDeps, TInstance> =
+  | FactoryFunction<TDeps, TInstance>
+  | FactoryClass<TDeps, TInstance>;
+
+/** Converts a map of dependencies to a map of factories. */
+export type ToFactoryMap<TDependencies extends Record<string, any>> = {
+  [Key in keyof TDependencies]: Factory<TDependencies[Key], any>;
+};
+
 /**
  * A factory function is a function that takes dependencies as the first
  * argument and returns an instance of a service.
  */
-export type FactoryFunction<RegisteredFactories extends Record<string, any>> = (
-  deps: ToDependencies<RegisteredFactories>,
-) => any;
+export type FactoryFunction<TDeps, TInstance> = (deps: TDeps) => TInstance;
+
 /**
  * A factory class is a class that takes dependencies as the first argument of
  * it's constructor.
  */
-export type FactoryClass<RegisteredFactories extends Record<string, any>> = {
-  new (deps: ToDependencies<RegisteredFactories>): any;
-};
+export type FactoryClass<TDeps, TInstance> = { new (deps: TDeps): TInstance };
+
+/** Given a factory, return the dependencies it requires. */
+export type GetDependencies<TFactory> = TFactory extends (
+  deps: infer Deps,
+) => any
+  ? Deps
+  : TFactory extends { new (deps: infer Deps): any }
+    ? Deps
+    : never;
+
+/** Given a factory, return the instance it creates. */
+export type GetInstance<TFactory> = TFactory extends (
+  ...args: any[]
+) => infer Instance
+  ? Instance
+  : TFactory extends { new (...args: any[]): infer Instance }
+    ? Instance
+    : never;
 
 /**
  * Sometimes services need additional parameters passed in that aren't
@@ -199,20 +206,19 @@ export type FactoryClass<RegisteredFactories extends Record<string, any>> = {
  * ```
  */
 export function parameterize<
-  Parameters extends Record<string, any>,
-  Dependencies extends Record<string, any>,
+  TFactory extends Factory<any, any>,
+  TParams extends Record<string, any>,
 >(
-  factory: Factory<Dependencies>,
-  parameters: Parameters,
-): Factory<{
-  // Equivalent to Factory<Omit<Dependencies, keyof Parameters>>, but TS
-  // displays this type in an easy to read format, "Factory<{ ... }>", vs
-  // "Factory<Omit<{ ... }, keyof { ... }>>" in error messages and when hovering
-  // over a variable in your IDE.
-  [K in keyof Dependencies as K extends keyof Parameters
-    ? never
-    : K]: Dependencies[K];
-}> {
+  factory: TFactory,
+  parameters: TParams,
+): Factory<
+  {
+    [key in keyof GetDependencies<TFactory> as key extends keyof TParams
+      ? never
+      : key]: GetDependencies<TFactory>[key];
+  },
+  GetInstance<TFactory>
+> {
   return (deps: any) => {
     // Since deps is a proxy, we can't spread it. Instead, we create a second proxy wrapping it.
     const depsWithParameters = new Proxy(parameters, {
@@ -221,6 +227,6 @@ export function parameterize<
         return deps[prop];
       },
     });
-    return callFactory(factory, depsWithParameters);
+    return instantiate(factory, depsWithParameters);
   };
 }

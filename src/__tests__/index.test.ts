@@ -5,18 +5,25 @@ describe("IoC Container", () => {
   it("should construct a dependency tree", () => {
     const expected = ["one", "two"];
 
-    const openDatabase = () => ({
+    type Database = {
+      query: () => string[];
+    };
+    const openDatabase = (): Database => ({
       query: () => expected,
     });
-    type Database = ReturnType<typeof openDatabase>;
 
-    const createUserRepo = (deps: { db: Database }) => ({
+    type Repo = {
+      list: () => string[];
+    };
+    const createUserRepo = (deps: { db: Database }): Repo => ({
       list: () => deps.db.query(),
     });
 
     const container = createIocContainer()
       .register({ db: openDatabase })
       .register({ userRepo: createUserRepo });
+
+    container.resolve("db").query();
 
     const userRepo = container.resolve("userRepo");
     const actual = userRepo.list();
@@ -93,10 +100,13 @@ describe("IoC Container", () => {
       }
     }
 
-    const createUserRepo = (deps: { db: Database; id: number }) => ({
+    type Repo = {
+      list: () => string[];
+    };
+    const createUserRepo = (deps: { db: Database; id: number }): Repo => ({
       list: () => deps.db.query("user" + deps.id),
     });
-    const createDocumentRepo = (deps: { db: Database }) => ({
+    const createDocumentRepo = (deps: { db: Database }): Repo => ({
       list: () => deps.db.query("document"),
     });
 

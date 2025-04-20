@@ -1,4 +1,4 @@
-import { createIocContainer } from "..";
+import { createIocContainer, parameterize } from "..";
 
 // SERVICES
 
@@ -8,6 +8,9 @@ type Database = {
   query: () => User[];
 };
 function openDatabase(): Database {
+  throw Error("TODO");
+}
+function openDatabase2(_deps: { path: string }): Database {
   throw Error("TODO");
 }
 
@@ -64,3 +67,12 @@ createIocContainer()
     // @ts-expect-error: userRepo needs database to be registered as "db", not "database"
     userRepo: createUserRepo,
   });
+
+createIocContainer()
+  .register({ db: parameterize(openDatabase2, { path: "test.db" }) })
+  .registrations.db.query();
+
+createIocContainer()
+  // @ts-expect-error: Parameterize should require "path" here
+  .register({ db: parameterize(openDatabase2, {}) })
+  .registrations.db.query();
