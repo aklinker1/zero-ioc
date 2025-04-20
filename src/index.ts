@@ -163,9 +163,7 @@ export type FactoryFunction<TDeps, TInstance> = (deps: TDeps) => TInstance;
  * A factory class is a class that takes dependencies as the first argument of
  * it's constructor.
  */
-export type FactoryClass<TDeps, TInstance> = {
-  new (deps: TDeps): TInstance;
-};
+export type FactoryClass<TDeps, TInstance> = { new (deps: TDeps): TInstance };
 
 /** Given a factory, return the dependencies it requires. */
 export type GetDependencies<TFactory> = TFactory extends (
