@@ -17,7 +17,7 @@ export type IocContainer<TFactories extends Record<string, any>> = {
   >(
     factories: TNewFactories,
   ): IocContainer<{
-    // Equivalent to `Dependencies & NewFactories`, but types look nicer in IDE and error messages
+    // Equivalent to `TFactories & TNewFactories`, but types look nicer in IDE and error messages
     [key in
       | keyof TFactories
       | keyof TNewFactories]: key extends keyof TNewFactories
