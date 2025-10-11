@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.3.3
+
+[compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.3.2...v1.3.3)
+
+### 🏡 Chore
+
+- Ignore changelog formatting ([74a72ea](https://github.com/aklinker1/zero-ioc/commit/74a72ea))
+
+### ❤️ Contributors
+
+- Aaron ([@aklinker1](https://github.com/aklinker1))
+
 ## v1.3.2
 
 [compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.3.1...v1.3.2)
