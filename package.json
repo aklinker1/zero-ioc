@@ -4,11 +4,7 @@
   "packageManager": "bun@1.2.9",
   "scripts": {
     "test": "bun test --watch",
-    "build": "bun build src/index.ts --outdir dist && tsc -p tsconfig.build.json",
-    "publish:all": "bun run publish:npm && bun run publish:jsr",
-    "publish:jsr": "bunx jsr publish",
-    "publish:npm": "bun publish",
-    "prepublishOnly": "bun check && bun test && bun run build"
+    "build": "bun build src/index.ts --outdir dist && tsc -p tsconfig.build.json"
   },
   "devDependencies": {
     "@aklinker1/check": "^1.4.5",
@@ -26,8 +22,7 @@
   },
   "homepage": "https://jsr.io/@aklinker1/zero-ioc",
   "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/aklinker1/zero-ioc.git"
+    "url": "https://github.com/aklinker1/zero-ioc"
   },
   "files": [
     "dist"

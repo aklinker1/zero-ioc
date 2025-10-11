@@ -74,7 +74,7 @@ To access an object containing all registered services, you have two options:
    const { userRepo, userService } = container.resolveAll();
    ```
 
-## Paramaterization
+## Parameterization
 
 Sometimes you need to pass additional parameters to a service, like config, that's not a previously registered service.
 
