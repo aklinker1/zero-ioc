@@ -5,7 +5,7 @@
   "packageManager": "bun@1.2.9",
   "scripts": {
     "test": "bun test --watch",
-    "build": "bun build src/index.ts --outdir dist && tsc -p tsconfig.build.json"
+    "build": "tsdown src/index.ts"
   },
   "devDependencies": {
     "@aklinker1/check": "^1.4.5",
@@ -13,6 +13,7 @@
     "oxlint": "^0.16.6",
     "prettier": "^3.5.3",
     "publint": "^0.3.12",
+    "tsdown": "^0.19.0-beta.2",
     "typescript": "^5.0.0"
   },
   "license": "MIT",
