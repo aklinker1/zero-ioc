@@ -53,7 +53,7 @@ const userService = container.resolve("userService");
 
 ## Register Order
 
-You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` in a separate call to `register` before registering `userRepo`.
+You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` ***in a separate call to `register`*** before registering `userRepo`.
 
 The good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
 
@@ -78,7 +78,7 @@ To access an object containing all registered services, you have two options:
 
 Sometimes you need to pass additional parameters to a service, like config, that aren't previously registered services.
 
-In this case, you should use the `parameterize` function! Any parameters passed in via the second argument don't need to be registered beforehand!
+In this case, use `parameterize`. Any parameters passed in via the second argument don't need to be registered beforehand!
 
 ```ts
 import { createIocContainer, parameterize } from "@aklinker1/zero-ioc";
@@ -133,7 +133,6 @@ So if you have a service that needs to be recreated every time it is resolved, r
 interface UsersRepo {
   // ...
 }
-
 function createUsersRepo() {
   console.log("Creating new UsersRepo");
 
@@ -166,8 +165,6 @@ This may not be as convenient as supporting transient services directly, but it'
 "Scoped" services are services that are created once per "scope". Zero IoC does not currently support creating "scopes", and thus does not support scoped services.
 
 > If someone has a good proposal that keeps the API simple, I'd be happy to consider adding support.
-
----
 
 <br />
 
