@@ -57,7 +57,7 @@ const userService = container.resolve("userService");
 
 ## Register Order
 
-You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` ***in a separate call to `register`*** before registering `userRepo`.
+You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` **_in a separate call to `register`_** before registering `userRepo`.
 
 The good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
 
