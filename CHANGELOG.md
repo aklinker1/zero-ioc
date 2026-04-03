@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.4.1
+
+[compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.4.0...v1.4.1)
+
+### 🩹 Fixes
+
+- Refactor type parameters to simplify the containers external     typing. ([36198ee](https://github.com/aklinker1/zero-ioc/commit/36198ee))
+
+### 📖 Documentation
+
+- Update image ([41dedbd](https://github.com/aklinker1/zero-ioc/commit/41dedbd))
+
+### ❤️ Contributors
+
+- Aaron ([@aklinker1](https://github.com/aklinker1))
+
 ## v1.4.0
 
 [compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.3.4...v1.4.0)
