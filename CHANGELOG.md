@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.4.0
+
+[compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.3.4...v1.4.0)
+
+### 🚀 Enhancements
+
+- Add override for `container.register("serviceName", factory)` ([e4899e5](https://github.com/aklinker1/zero-ioc/commit/e4899e5))
+
+### 🤖 CI
+
+- Update `oven-sh/setup-bun` to 2.2.0 ([8308c0c](https://github.com/aklinker1/zero-ioc/commit/8308c0c))
+
+### ❤️ Contributors
+
+- Aaron ([@aklinker1](https://github.com/aklinker1))
+
 ## v1.3.4
 
 [compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.3.3...v1.3.4)
