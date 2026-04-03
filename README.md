@@ -61,7 +61,7 @@ You can only call `register` with a service if you've already registered all of 
 
 The good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
 
-<img width="500" alt="Example type error" src="https://github.com/aklinker1/zero-ioc/raw/main/.github/dependency-type-error.png">
+<img width="500" alt="Example type error" src="https://raw.githubusercontent.com/aklinker1/zero-ioc/main/.github/dependency-type-error.png">
 
 Additionally, thanks to this type-safety, TypeScript will also report an error for circular dependencies!
 
