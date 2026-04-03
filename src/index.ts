@@ -26,6 +26,23 @@ export type IocContainer<TFactories extends Record<string, any>> = {
         ? TFactories[key]
         : never;
   }>;
+  register<
+    TServiceName extends string,
+    TFactory extends Factory<
+      { [key in keyof TFactories]: GetInstance<TFactories[key]> },
+      any
+    >,
+  >(
+    key: TServiceName,
+    factory: TFactory,
+  ): IocContainer<{
+    // Equivalent to `TFactories & TNewFactories`, but types look nicer in IDE and error messages
+    [key in keyof TFactories | TServiceName]: key extends TServiceName
+      ? TFactory
+      : key extends keyof TFactories
+        ? TFactories[key]
+        : never;
+  }>;
 
   /**
    * Get an already instantiated service or create a new instance of one. When
@@ -93,15 +110,21 @@ export function createIocContainer(): IocContainer<{}> {
   );
 
   const container: IocContainer<any> = {
-    register(newFactories) {
-      for (const [key, factory] of Object.entries(newFactories)) {
+    register(arg1: any, arg2?: any) {
+      const newFactories = typeof arg1 === "string" ? { [arg1]: arg2 } : arg1;
+
+      for (const [key, factory] of Object.entries<Factory<any, any>>(
+        newFactories,
+      )) {
         if (factories[key]) {
           throw Error(`Service "${key}" already registered`);
         }
         factories[key] = factory;
       }
+
       return container;
     },
+
     resolve(key) {
       if (instanceCache[key as string]) return instanceCache[key as string];
 
@@ -113,9 +136,11 @@ export function createIocContainer(): IocContainer<{}> {
         resolveProxy,
       ));
     },
+
     get registrations() {
       return resolveProxy;
     },
+
     resolveAll() {
       return Object.keys(factories).reduce(
         (acc, key) => {

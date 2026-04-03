@@ -76,3 +76,10 @@ createIocContainer()
   // @ts-expect-error: Parameterize should require "path" here
   .register({ db: parameterize(openDatabase2, {}) })
   .registrations.db.query();
+
+const containerB = createIocContainer()
+  .register("db", openDatabase)
+  .register("other", createOtherDep)
+  .register("userRepo", createUserRepo)
+  .register("userService", createUserService);
+containerB.resolve("userService");
