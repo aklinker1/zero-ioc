@@ -2,45 +2,37 @@
  * Inversion of Control (IoC) container that lets you register and resolve
  * dependencies.
  */
-export type IocContainer<TFactories extends Record<string, any>> = {
+export type IocContainer<TInstances extends Record<string, any>> = {
   /**
    * Add one or more services to the container.
    * Any dependencies of the registered services must have been registered in a
    * previous call to `register`, or else you will get a type error. This makes
    * it impossible to accidentally create a circular dependency.
    */
-  register<
-    TNewFactories extends Record<
-      string,
-      Factory<{ [key in keyof TFactories]: GetInstance<TFactories[key]> }, any>
-    >,
-  >(
+  register<TNewFactories extends Record<string, Factory<TInstances, any>>>(
     factories: TNewFactories,
   ): IocContainer<{
-    // Equivalent to `TFactories & TNewFactories`, but types look nicer in IDE and error messages
+    // Equivalent to `TInstances & { [key]: GetInstance<...> }`, but types look nicer in IDE and error messages
     [key in
-      | keyof TFactories
+      | keyof TInstances
       | keyof TNewFactories]: key extends keyof TNewFactories
-      ? TNewFactories[key]
-      : key extends keyof TFactories
-        ? TFactories[key]
+      ? GetInstance<TNewFactories[key]>
+      : key extends keyof TInstances
+        ? TInstances[key]
         : never;
   }>;
   register<
     TServiceName extends string,
-    TFactory extends Factory<
-      { [key in keyof TFactories]: GetInstance<TFactories[key]> },
-      any
-    >,
+    TFactory extends Factory<TInstances, any>,
   >(
     key: TServiceName,
     factory: TFactory,
   ): IocContainer<{
-    // Equivalent to `TFactories & TNewFactories`, but types look nicer in IDE and error messages
-    [key in keyof TFactories | TServiceName]: key extends TServiceName
-      ? TFactory
-      : key extends keyof TFactories
-        ? TFactories[key]
+    // Equivalent to `TInstances & { [TServiceName]: GetInstance<TFactory> }`, but types look nicer in IDE and error messages
+    [key in keyof TInstances | TServiceName]: key extends TServiceName
+      ? GetInstance<TFactory>
+      : key extends keyof TInstances
+        ? TInstances[key]
         : never;
   }>;
 
@@ -50,7 +42,7 @@ export type IocContainer<TFactories extends Record<string, any>> = {
    *
    * Attempting to resolve a key that has not been registered will throw an error.
    */
-  resolve<Key extends keyof TFactories>(key: Key): GetInstance<TFactories[Key]>;
+  resolve<Key extends keyof TInstances>(key: Key): TInstances[Key];
 
   /**
    * A proxy object giving you access to all registered services. It can be
@@ -70,9 +62,7 @@ export type IocContainer<TFactories extends Record<string, any>> = {
    * const { db, userRepo } = container.registrations;
    * ```
    */
-  registrations: Readonly<{
-    [key in keyof TFactories]: GetInstance<TFactories[key]>;
-  }>;
+  registrations: Readonly<TInstances>;
 
   /**
    * Resolves all dependencies immediately and returns an object containing
@@ -83,7 +73,7 @@ export type IocContainer<TFactories extends Record<string, any>> = {
    * Can be useful if a library doesn't work well with Proxies, and you need a
    * real object containing all dependencies.
    */
-  resolveAll(): { [key in keyof TFactories]: GetInstance<TFactories[key]> };
+  resolveAll(): TInstances;
 };
 
 /**
