@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.5.1
+
+[compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.5.0...v1.5.1)
+
+### 📖 Documentation
+
+- Improve `transient` docs ([4381947](https://github.com/aklinker1/zero-ioc/commit/4381947))
+- Prefer `string, factory` registration over `object` ([8b888cb](https://github.com/aklinker1/zero-ioc/commit/8b888cb))
+
+### ❤️ Contributors
+
+- Aaron ([@aklinker1](https://github.com/aklinker1))
+
 ## v1.5.0
 
 [compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.4.1...v1.5.0)
