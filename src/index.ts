@@ -251,6 +251,23 @@ export function parameterize<
 
 const TRANSIENT_SYMBOL = Symbol("zero-ioc/transient");
 
+/**
+ * Make a service "transient" instead of a singleton. Whenever the container
+ * resolves a transient service, a new instance is created.
+ *
+ * @param factory The service factory or class to register as transient.
+ * @returns the IoC container.
+ *
+ * @example
+ *
+ * ```ts
+ * import { createIocContainer, transient } from '@aklinker1/zero-ioc';
+ * import { createUserService } from './user-service';
+ *
+ * const container = createIocContainer()
+ *   .register("userService", transient(createUserService))
+ * ```
+ */
 export function transient<T extends Factory<any, any>>(factory: T): T {
   const transientFactory = (deps: any) => instantiate(factory, deps);
   transientFactory[TRANSIENT_SYMBOL] = true;

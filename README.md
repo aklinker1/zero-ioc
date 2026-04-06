@@ -132,6 +132,8 @@ console.log(userRepo1 === userRepo2); // true
 A "transient" service is a service that is created every time it is resolved. Use the `transient` helper to inform the container that your service should be created each time:
 
 ```ts
+import { createIocContainer, transient } from '@aklinker1/zero-ioc';
+
 interface UserRepo {
   // ...
 }
