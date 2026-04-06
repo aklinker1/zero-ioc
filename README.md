@@ -28,7 +28,7 @@ export function createUserRepo(deps: { db: Database }): UserRepo {
 
 // user-service.ts
 export class UserService {
-  constructor(deps: { userRepo: UserRepo; db: Database }) {
+  constructor(private readonly deps: { userRepo: UserRepo; db: Database }) {
     // ...
   }
 }
@@ -109,22 +109,22 @@ const container = createIocContainer().register({
 `createIocContainer` only manages singleton services. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
 
 ```ts
-interface UsersRepo {
+interface UserRepo {
   // ...
 }
-function createUsersRepo() {
+function createUserRepo() {
   return {
     // ...
   };
 }
 
 const container = createIocContainer().register({
-  usersRepo: createUsersRepo,
+  userRepo: createUserRepo,
 });
 
-const usersRepo1 = container.resolve("usersRepo");
-const usersRepo2 = container.resolve("usersRepo");
-console.log(usersRepo1 === usersRepo2); // true
+const userRepo1 = container.resolve("userRepo");
+const userRepo2 = container.resolve("userRepo");
+console.log(userRepo1 === userRepo2); // true
 ```
 
 ### Transient
@@ -134,30 +134,30 @@ A "transient" service is a service that is created every time it is resolved... 
 So if you have a service that needs to be recreated every time it is resolved, register a factory instead:
 
 ```ts
-interface UsersRepo {
+interface UserRepo {
   // ...
 }
-function createUsersRepo() {
-  console.log("Creating new UsersRepo");
+function createUserRepo() {
+  console.log("Creating new UserRepo");
 
   return {
     // ...
   };
 }
 
-type UsersRepoFactory = () => UsersRepo;
-function createUsersRepoFactory(): UsersRepoFactory {
-  return createUsersRepo;
+type UserRepoFactory = () => UserRepo;
+function createUserRepoFactory(): UserRepoFactory {
+  return createUserRepo;
 }
 
 const container = createIocContainer().register({
-  usersRepoFactory: createUsersRepoFactory,
+  userRepoFactory: createUserRepoFactory,
 });
 
-const usersRepoFactory = container.resolve("usersRepoFactory");
-const usersRepo1 = usersRepoFactory();
-const usersRepo2 = usersRepoFactory();
-console.log(usersRepo1 === usersRepo2); // false
+const userRepoFactory = container.resolve("userRepoFactory");
+const userRepo1 = userRepoFactory();
+const userRepo2 = userRepoFactory();
+console.log(userRepo1 === userRepo2); // false
 ```
 
 This may not be as convenient as supporting transient services directly, but it's a simple and explicit way to achieve the same result.
