@@ -129,15 +129,14 @@ console.log(userRepo1 === userRepo2); // true
 
 ### Transient
 
-A "transient" service is a service that is created every time it is resolved... but that's just a function! More commonly referred to as a "factory" in this context.
-
-So if you have a service that needs to be recreated every time it is resolved, register a factory instead:
+A "transient" service is a service that is created every time it is resolved. Use the `transient` helper to inform the container that your service should be created each time:
 
 ```ts
 interface UserRepo {
   // ...
 }
-function createUserRepo() {
+
+function createUserRepo(): UserRepo {
   console.log("Creating new UserRepo");
 
   return {
@@ -145,24 +144,28 @@ function createUserRepo() {
   };
 }
 
-type UserRepoFactory = () => UserRepo;
-function createUserRepoFactory(): UserRepoFactory {
-  return createUserRepo;
-}
-
 const container = createIocContainer().register({
-  userRepoFactory: createUserRepoFactory,
+  userRepoFactory: transient(createUserRepoFactory),
 });
 
-const userRepoFactory = container.resolve("userRepoFactory");
-const userRepo1 = userRepoFactory();
-const userRepo2 = userRepoFactory();
+const userRepo1 = container.resolve("userRepo");
+const userRepo2 = container.resolve("userRepo");
 console.log(userRepo1 === userRepo2); // false
 ```
 
-This may not be as convenient as supporting transient services directly, but it's a simple and explicit way to achieve the same result.
+Note that when using `container.resolveAll()`, you're resolving all dependencies immediately, and any transient services will be created once.
 
-> If someone has a good proposal to add support for transient services that keeps the API simple, I'd be happy to consider it.
+If you need to create an instance every time, you can either:
+
+1. Use the `container.registrations` proxy, which will return a new instance on every access.
+2. Don't use `transient`. Instead, register a function that returns your instance:
+   ```ts
+   container.register("userRepoFactory", () => createUserRepo)
+   const userRepoFactory = container.resolve("userRepoFactory")
+   const userRepo1 = userRepoFactory();
+   const userRepo2 = userRepoFactory();
+   console.log(userRepo1 === userRepo2); // false
+   ```
 
 ### Scoped
 

@@ -121,6 +121,9 @@ export function createIocContainer(): IocContainer<{}> {
       const factory = factories[key as string];
       if (!factory) throw Error(`Service "${key as string}" not found`);
 
+      if (TRANSIENT_SYMBOL in factory)
+        return instantiate(factory, resolveProxy);
+
       return (instanceCache[key as string] = instantiate(
         factory,
         resolveProxy,
@@ -244,4 +247,12 @@ export function parameterize<
     });
     return instantiate(factory, depsWithParameters);
   };
+}
+
+const TRANSIENT_SYMBOL = Symbol("zero-ioc/transient");
+
+export function transient<T extends Factory<any, any>>(factory: T): T {
+  const transientFactory = (deps: any) => instantiate(factory, deps);
+  transientFactory[TRANSIENT_SYMBOL] = true;
+  return transientFactory as any as T;
 }
