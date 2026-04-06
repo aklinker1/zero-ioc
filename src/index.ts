@@ -9,18 +9,6 @@ export type IocContainer<TInstances extends Record<string, any>> = {
    * previous call to `register`, or else you will get a type error. This makes
    * it impossible to accidentally create a circular dependency.
    */
-  register<TNewFactories extends Record<string, Factory<TInstances, any>>>(
-    factories: TNewFactories,
-  ): IocContainer<{
-    // Equivalent to `TInstances & { [key]: GetInstance<...> }`, but types look nicer in IDE and error messages
-    [key in
-      | keyof TInstances
-      | keyof TNewFactories]: key extends keyof TNewFactories
-      ? GetInstance<TNewFactories[key]>
-      : key extends keyof TInstances
-        ? TInstances[key]
-        : never;
-  }>;
   register<
     TServiceName extends string,
     TFactory extends Factory<TInstances, any>,
@@ -31,6 +19,18 @@ export type IocContainer<TInstances extends Record<string, any>> = {
     // Equivalent to `TInstances & { [TServiceName]: GetInstance<TFactory> }`, but types look nicer in IDE and error messages
     [key in keyof TInstances | TServiceName]: key extends TServiceName
       ? GetInstance<TFactory>
+      : key extends keyof TInstances
+        ? TInstances[key]
+        : never;
+  }>;
+  register<TNewFactories extends Record<string, Factory<TInstances, any>>>(
+    factories: TNewFactories,
+  ): IocContainer<{
+    // Equivalent to `TInstances & { [key]: GetInstance<...> }`, but types look nicer in IDE and error messages
+    [key in
+      | keyof TInstances
+      | keyof TNewFactories]: key extends keyof TNewFactories
+      ? GetInstance<TNewFactories[key]>
       : key extends keyof TInstances
         ? TInstances[key]
         : never;

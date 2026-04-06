@@ -44,9 +44,9 @@ import { UserService } from "./user-service";
 import { createIocContainer } from "@aklinker1/zero-ioc";
 
 export const container = createIocContainer()
-  .register({ db: openDatabase })
-  .register({ userRepo: createUserRepo })
-  .register({ userService: UserService });
+  .register("db", openDatabase)
+  .register("userRepo", createUserRepo)
+  .register("userService", UserService);
 ```
 
 And finally, to get an instance of a service from the container, use `resolve`:
@@ -94,12 +94,13 @@ const openDatabase = (deps: {
   // ...
 };
 
-const container = createIocContainer().register({
-  db: parameterize(openDatabase, {
+const container = createIocContainer().register(
+  "db",
+  parameterize(openDatabase, {
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
   }),
-});
+);
 ```
 
 ## Service Lifetime
@@ -118,9 +119,7 @@ function createUserRepo() {
   };
 }
 
-const container = createIocContainer().register({
-  userRepo: createUserRepo,
-});
+const container = createIocContainer().register("userRepo", createUserRepo);
 
 const userRepo1 = container.resolve("userRepo");
 const userRepo2 = container.resolve("userRepo");
@@ -132,7 +131,7 @@ console.log(userRepo1 === userRepo2); // true
 A "transient" service is a service that is created every time it is resolved. Use the `transient` helper to inform the container that your service should be created each time:
 
 ```ts
-import { createIocContainer, transient } from '@aklinker1/zero-ioc';
+import { createIocContainer, transient } from "@aklinker1/zero-ioc";
 
 interface UserRepo {
   // ...
@@ -146,9 +145,10 @@ function createUserRepo(): UserRepo {
   };
 }
 
-const container = createIocContainer().register({
-  userRepoFactory: transient(createUserRepoFactory),
-});
+const container = createIocContainer().register(
+  "userRepoFactory",
+  transient(createUserRepoFactory),
+);
 
 const userRepo1 = container.resolve("userRepo");
 const userRepo2 = container.resolve("userRepo");
