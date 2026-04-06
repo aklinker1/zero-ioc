@@ -160,8 +160,8 @@ If you need to create an instance every time, you can either:
 1. Use the `container.registrations` proxy, which will return a new instance on every access.
 2. Don't use `transient`. Instead, register a function that returns your instance:
    ```ts
-   container.register("userRepoFactory", () => createUserRepo)
-   const userRepoFactory = container.resolve("userRepoFactory")
+   container.register("userRepoFactory", () => createUserRepo);
+   const userRepoFactory = container.resolve("userRepoFactory");
    const userRepo1 = userRepoFactory();
    const userRepo2 = userRepoFactory();
    console.log(userRepo1 === userRepo2); // false
