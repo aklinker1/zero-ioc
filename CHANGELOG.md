@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.5.0
+
+[compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.4.1...v1.5.0)
+
+### 🚀 Enhancements
+
+- Transient service support ([#3](https://github.com/aklinker1/zero-ioc/pull/3))
+
+### 📖 Documentation
+
+- Update README ([36b4401](https://github.com/aklinker1/zero-ioc/commit/36b4401))
+
+### ❤️ Contributors
+
+- Aaron ([@aklinker1](https://github.com/aklinker1))
+
 ## v1.4.1
 
 [compare changes](https://github.com/aklinker1/zero-ioc/compare/v1.4.0...v1.4.1)
