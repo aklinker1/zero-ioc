@@ -1,5 +1,5 @@
-import { describe, it, expect, mock } from "bun:test";
-import { parameterize, createIocContainer } from "..";
+import { describe, expect, it, mock } from "bun:test";
+import { createIocContainer, parameterize, transient } from "..";
 
 describe("IoC Container", () => {
   it("should construct a dependency tree", () => {
@@ -60,6 +60,31 @@ describe("IoC Container", () => {
     expect(createUserRepo).toBeCalledTimes(1);
     expect(createDocumentRepo).toBeCalledTimes(1);
     expect(openDatabase).toBeCalledTimes(1);
+  });
+
+  it("should create multiple instances of transient services", () => {
+    const openDatabase = mock(() => ({
+      query: (from: string) => ["one", "two", from],
+    }));
+    type Database = ReturnType<typeof openDatabase>;
+
+    const createUserRepo = mock((deps: { db: Database }) => ({
+      list: () => deps.db.query("user"),
+    }));
+
+    const container = createIocContainer()
+      .register("db", openDatabase)
+      .register("userRepo", transient(createUserRepo));
+
+    const db1 = container.resolve("db");
+    const db2 = container.resolve("db");
+    const userRepo1 = container.resolve("userRepo");
+    const userRepo2 = container.resolve("userRepo");
+
+    expect(openDatabase).toBeCalledTimes(1);
+    expect(createUserRepo).toBeCalledTimes(2);
+    expect(db1).toBe(db2);
+    expect(userRepo1).not.toBe(userRepo2);
   });
 
   it("should support classes and factory functions", () => {
