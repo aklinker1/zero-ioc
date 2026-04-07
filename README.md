@@ -186,7 +186,7 @@ This library was heavily inspired by [Awilix](https://github.com/jeffijoe/awilix
 
 ## Feature Comparison
 
-| Feature                         |  [Zero IoC](https://npmx.dev/package/@aklinker1/zero-ioc)   | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
+| Feature                         |                          Zero IoC                           | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
 | ------------------------------- | :---------------------------------------------------------: | :---------------------------------------: | :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------: |
 | Decorators                      |                             ❌                              |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
 | Require `reflect-metadata`      |                             ❌                              |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
