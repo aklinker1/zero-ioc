@@ -107,12 +107,13 @@ const container = createIocContainer().register(
 
 ### Singleton
 
-`createIocContainer` only manages singleton services. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
+`createIocContainer` uses singletones by default. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
 
 ```ts
 interface UserRepo {
   // ...
 }
+
 function createUserRepo() {
   return {
     // ...
@@ -147,7 +148,7 @@ function createUserRepo(): UserRepo {
 
 const container = createIocContainer().register(
   "userRepoFactory",
-  transient(createUserRepoFactory),
+  transient(createUserRepo),
 );
 
 const userRepo1 = container.resolve("userRepo");
@@ -160,7 +161,7 @@ Note that when using `container.resolveAll()`, you're resolving all dependencies
 If you need to create an instance every time, you can either:
 
 1. Use the `container.registrations` proxy, which will return a new instance on every access.
-2. Don't use `transient`. Instead, register a function that returns your instance:
+2. Don't use `transient`. Instead, register a function that returns your factory function or class:
    ```ts
    container.register("userRepoFactory", () => createUserRepo);
    const userRepoFactory = container.resolve("userRepoFactory");
@@ -173,7 +174,9 @@ If you need to create an instance every time, you can either:
 
 "Scoped" services are services that are created once per "scope". Zero IoC does not currently support creating "scopes", and thus does not support scoped services.
 
-> If someone has a good proposal that keeps the API simple, I'd be happy to consider adding support.
+See [#4](https://github.com/aklinker1/zero-ioc/issues/4).
+
+> If someone has a good proposal that keeps the API simple, leave a comment on the issue. I'd be happy to consider adding support.
 
 <br />
 
