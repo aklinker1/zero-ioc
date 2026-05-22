@@ -8,6 +8,12 @@ Zero dependency, type-safe, decorator-free Inversion of Control (IoC) container.
 
 </div>
 
+```sh
+pnpm add @aklinker1/zero-ioc
+bun  add @aklinker1/zero-ioc
+deno add @aklinker1/zero-ioc
+```
+
 ## Usage
 
 Define your services. You can use classes or factory functions:
