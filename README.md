@@ -113,7 +113,7 @@ const container = createIocContainer().register(
 
 ### Singleton
 
-`createIocContainer` uses singletones by default. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
+`createIocContainer` uses singletons by default. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
 
 ```ts
 interface UserRepo {
