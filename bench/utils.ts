@@ -27,7 +27,7 @@ export function generateSvg(bench: Bench): string {
   const n = results.length;
 
   const WIDTH = 672;
-  const TITLE_HEIGHT = 48;
+  const TITLE_HEIGHT = 32;
   const Y_AXIS_LABEL_WIDTH = 113;
   const ROW_HEIGHT = 32;
   const PADDING = 16;
@@ -66,14 +66,15 @@ export function generateSvg(bench: Bench): string {
   );
 
   const lines = [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${totalHeight}" fill="currentColor" width="${WIDTH}" height="${totalHeight}" background-color="white" font-family="sans-serif">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${totalHeight}" fill="currentColor" width="${WIDTH}" height="${totalHeight}" font-family="sans-serif">`,
+    new Rect(0, 0, WIDTH, totalHeight).toRect({ fill: "white" }),
     container.toBoundingRect(),
 
     // Title
     titleRect.toBoundingRect(),
     titleRect.toText(bench.name!, {
       textAlign: "start",
-      fontSize: 24,
+      fontSize: 20,
       fontWeight: "bold",
     }),
 
