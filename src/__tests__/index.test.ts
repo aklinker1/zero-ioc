@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { createIocContainer, parameterize, transient } from "..";
+import { createContainer } from "awilix";
 
 describe("IoC Container", () => {
   it("should construct a dependency tree", () => {
@@ -15,9 +16,11 @@ describe("IoC Container", () => {
     type Repo = {
       list: () => string[];
     };
-    const createUserRepo = (deps: { db: Database }): Repo => ({
-      list: () => deps.db.query(),
-    });
+    const createUserRepo = (deps: { db: Database }): Repo => {
+      return {
+        list: () => deps.db.query(),
+      };
+    };
 
     const container = createIocContainer()
       .register({ db: openDatabase })
@@ -209,5 +212,42 @@ describe("IoC Container", () => {
     expect(services.documentRepo).toBeInstanceOf(DocumentRepo);
     // @ts-expect-error: Purposefully accessing a non-existent service
     expect(services.other).toBeUndefined();
+  });
+
+  describe("scopes", () => {
+    it("should resolve scope and container dependencies when a service is resolved", () => {
+      const a = "a";
+      const b = "b";
+      const c = ({ a, b }: { a: string; b: string }) => ({ a, b });
+
+      const parent = createIocContainer().register("a", () => a);
+
+      const scope = parent.scope<{ b: "b" }>().register("c", c);
+      const scoped = scope({ b });
+
+      expect(scoped.resolve("a")).toBe(a);
+      expect(scoped.resolve("b")).toBe(b);
+      expect(scoped.resolve("c")).toEqual({ a, b });
+    });
+
+    it("should recreate services registered to the scope for each time it is created", () => {
+      const a = "a";
+      const createA = mock(() => a);
+      const createC = mock(({ a, b }: { a: string; b: string }) => ({ a, b }));
+      const container = createIocContainer().register("a", createA);
+      const scope = container.scope<{ b: string }>().register("c", createC);
+
+      const scoped1 = scope({ b: "b1" });
+      const scoped2 = scope({ b: "b2" });
+
+      const deps1 = scoped1.resolveAll();
+      const deps2 = scoped2.resolveAll();
+
+      expect(deps1).toEqual({ a, b: "b1", c: { a, b: "b1" } });
+      expect(deps2).toEqual({ a, b: "b2", c: { a, b: "b2" } });
+
+      expect(createA).toBeCalledTimes(1);
+      expect(createC).toBeCalledTimes(2);
+    });
   });
 });

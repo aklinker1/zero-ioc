@@ -37,6 +37,44 @@ export type IocContainer<TInstances extends Record<string, any>> = {
   }>;
 
   /**
+   * Define a scope with an initial set of dependencies that will be provided later in the application's lifecycle, not during startup.
+   *
+   * ```ts
+   * function createAuthService(deps: { database: Database, request: Request }): AuthService {
+   *   // This service depends on the `Request`, but we don't have that until the request is sent.
+   * }
+   *
+   *
+   * const container = createIocContainer()
+   *   .register("database", openDatabase)
+   *
+   *
+   * const httpScope = container.
+   *   .scope<{ request: Request }>()
+   *   .register("authService", createAuthService)
+   *
+   * Bun.serve({
+   *   fetch: (request) => {
+   *     const container = httpScope({ request })
+   *     const { authService } = container.registrations
+   *   }
+   * })
+   * ```
+   *
+   * @returns an {@link IocContainer} containing the scope's dependencies and registrations.
+   */
+  scope<TDeps extends Record<string, any>>(): IocScope<
+    TDeps,
+    {
+      [key in keyof TInstances | keyof TDeps]: key extends keyof TDeps
+        ? TDeps[key]
+        : key extends keyof TInstances
+          ? TInstances[key]
+          : never;
+    }
+  >;
+
+  /**
    * Get an already instantiated service or create a new instance of one. When
    * creating an instance, all dependencies it relies on are also resolved.
    *
@@ -77,6 +115,57 @@ export type IocContainer<TInstances extends Record<string, any>> = {
 };
 
 /**
+ * A scope is similar to a {@link IocContainer}, but instead of providing functions to resolve dependencies, it is a function that returns a container.
+ */
+export type IocScope<
+  TDeps extends Record<string, any>,
+  TInstances extends Record<string, any>,
+> = {
+  /**
+   * Instantiate the scope with it's required dependencies.
+   * @returns a {@link IocContainer} that can be used to access dependencies
+   */
+  (deps: TDeps): IocContainer<TInstances>;
+
+  /**
+   * Register services on the scope, same as registering services on a container.
+   * @see {@link IocContainer#register}
+   */
+  register<
+    TServiceName extends string,
+    TFactory extends Factory<TInstances, any>,
+  >(
+    key: TServiceName,
+    factory: TFactory,
+  ): IocScope<
+    TDeps,
+    {
+      // Equivalent to `TInstances & { [TServiceName]: GetInstance<TFactory> }`, but types look nicer in IDE and error messages
+      [key in keyof TInstances | TServiceName]: key extends TServiceName
+        ? GetInstance<TFactory>
+        : key extends keyof TInstances
+          ? TInstances[key]
+          : never;
+    }
+  >;
+  register<TNewFactories extends Record<string, Factory<TInstances, any>>>(
+    factories: TNewFactories,
+  ): IocScope<
+    TDeps,
+    {
+      // Equivalent to `TInstances & { [key]: GetInstance<...> }`, but types look nicer in IDE and error messages
+      [key in
+        | keyof TInstances
+        | keyof TNewFactories]: key extends keyof TNewFactories
+        ? GetInstance<TNewFactories[key]>
+        : key extends keyof TInstances
+          ? TInstances[key]
+          : never;
+    }
+  >;
+};
+
+/**
  * Creates an empty {@link IocContainer} for registering and injecting dependencies.
  *
  * @example
@@ -87,76 +176,134 @@ export type IocContainer<TInstances extends Record<string, any>> = {
  * ```
  */
 export function createIocContainer(): IocContainer<{}> {
-  const factories: Record<string, Factory<any, any>> = {};
-  const instanceCache: Record<string, any> = {};
+  return createInternalIocContainer();
+}
 
-  const resolveProxy = new Proxy(
-    {},
-    {
-      get(_, p) {
-        return container.resolve(p as string);
-      },
+class Registrations {
+  proxy = new Proxy<Record<string, any>>(Object.create(null), {
+    get: (_, key: string) => {
+      const res = this.resolve(key);
+      if (!res) throw Error(`Service "${key}" not found`);
+      return res;
     },
-  );
+  });
 
-  const container: IocContainer<any> = {
+  private factories: Record<string, Factory<any, any>> = Object.create(null);
+  private instanceCache: Record<string, any> = Object.create(null);
+
+  constructor(private parent?: Registrations) {}
+
+  has(key: string): boolean {
+    return key in this.factories || (this.parent?.has(key) ?? false);
+  }
+
+  addFactory(key: string, factory: Factory<any, any>): void {
+    if (this.has(key)) throw Error(`Service "${key}" already registered`);
+
+    this.factories[key] = factory;
+  }
+
+  resolve(key: string): unknown | undefined {
+    // Look at the parent first
+    if (this.parent) {
+      const instance = this.parent.resolve(key);
+      if (instance) return instance;
+    }
+
+    // The look for factories and cached instances here
+    const factory = this.factories[key];
+    if (!factory) return undefined;
+
+    if (TRANSIENT_SYMBOL in factory) return instantiate(factory, this.proxy);
+
+    return (this.instanceCache[key] ??= instantiate(factory, this.proxy));
+  }
+
+  resolveAll(): Record<string, any> {
+    const acc = this.parent?.resolveAll() ?? Object.create(null);
+
+    for (const key in this.factories) {
+      acc[key] = this.resolve(key);
+    }
+
+    return acc;
+  }
+}
+
+function createInternalIocContainer(
+  registrations = new Registrations(),
+): IocContainer<{}> {
+  const container: IocContainer<Record<string, any>> = {
     register(arg1: any, arg2?: any) {
-      const newFactories = typeof arg1 === "string" ? { [arg1]: arg2 } : arg1;
-
-      for (const [key, factory] of Object.entries<Factory<any, any>>(
-        newFactories,
-      )) {
-        if (factories[key]) {
-          throw Error(`Service "${key}" already registered`);
+      if (typeof arg1 === "string") {
+        registrations.addFactory(arg1, arg2);
+      } else {
+        for (const [key, factory] of Object.entries<Factory<any, any>>(arg1)) {
+          registrations.addFactory(key, factory);
         }
-        factories[key] = factory;
       }
-
       return container;
     },
 
     resolve(key) {
-      if (instanceCache[key as string]) return instanceCache[key as string];
-
-      const factory = factories[key as string];
-      if (!factory) throw Error(`Service "${key as string}" not found`);
-
-      if (TRANSIENT_SYMBOL in factory)
-        return instantiate(factory, resolveProxy);
-
-      return (instanceCache[key as string] = instantiate(
-        factory,
-        resolveProxy,
-      ));
+      return registrations.resolve(key);
     },
 
-    get registrations() {
-      return resolveProxy;
-    },
+    registrations: registrations.proxy,
 
     resolveAll() {
-      return Object.keys(factories).reduce(
-        (acc, key) => {
-          acc[key] = container.resolve(key);
-          return acc;
-        },
-        {} as Record<string, any>,
-      );
+      return registrations.resolveAll();
+    },
+
+    scope() {
+      return createIocScope(registrations);
     },
   };
 
   return container;
 }
 
+function createIocScope<
+  TDeps extends Record<string, any>,
+  TInstances extends Record<string, any>,
+>(parent: Registrations): IocScope<TDeps, TInstances> {
+  const factories: Array<[key: string, factory: Factory<any, any>]> = [];
+
+  const scope: IocScope<any, any> = (deps) => {
+    const registrations = new Registrations(parent);
+    for (const entry of Object.entries(deps)) {
+      registrations.addFactory(entry[0], () => entry[1]);
+    }
+    for (const [key, factory] of factories) {
+      registrations.addFactory(key, factory);
+    }
+    return createInternalIocContainer(registrations);
+  };
+
+  // @ts-expect-error: Declaring a function with a named function property
+  scope.register = (arg1, arg2) => {
+    if (typeof arg1 === "string") {
+      factories.push([arg1, arg2]);
+    } else {
+      for (const [key, factory] of Object.entries<Factory<any, any>>(arg1)) {
+        factories.push([key, factory]);
+      }
+    }
+    return scope;
+  };
+
+  return scope;
+}
+
 function instantiate<TFactory extends Factory<any, any>>(
   factory: TFactory,
   deps: any,
 ): GetInstance<TFactory> {
-  return isClass(factory) ? new factory(deps) : factory(deps);
-}
-
-function isClass(obj: any): obj is { new (...args: any[]): any } {
-  return typeof obj === "function" && !!obj.prototype?.constructor;
+  return factory.prototype
+    ? // Classes and functions have a prototype, and can be created via `new`.
+      new (factory as any)(deps)
+    : // Lambdas don't have a prototype, so they are called directly.
+      (factory as any)(deps);
 }
 
 /**
@@ -191,6 +338,10 @@ export type GetDependencies<TFactory> = TFactory extends (
   : TFactory extends { new (deps: infer Deps): any }
     ? Deps
     : never;
+
+/** Returns the map of names to service types for a container. */
+export type GetServices<T extends IocContainer<any>> =
+  T extends IocContainer<infer S> ? S : never;
 
 /** Given a factory, return the instance it creates. */
 export type GetInstance<TFactory> = TFactory extends (
