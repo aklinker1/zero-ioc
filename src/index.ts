@@ -269,6 +269,7 @@ function createIocScope<
 >(parent: Registrations): IocScope<TDeps, TInstances> {
   const factories: Array<[key: string, factory: Factory<any, any>]> = [];
 
+  // @ts-expect-error: Declaring a function with a named function property
   const scope: IocScope<any, any> = (deps) => {
     const registrations = new Registrations(parent);
     for (const entry of Object.entries(deps)) {
