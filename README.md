@@ -178,11 +178,37 @@ If you need to create an instance every time, you can either:
 
 ### Scoped
 
-"Scoped" services are services that are created once per "scope". Zero IoC does not currently support creating "scopes", and thus does not support scoped services.
+"Scoped" services are services that are created once per "scope".
 
-See [#4](https://github.com/aklinker1/zero-ioc/issues/4).
+These are really good for HTTP servers where a service may depend on the `Request` object, and you want to create a new instance of the service on every request:
 
-> If someone has a good proposal that keeps the API simple, leave a comment on the issue. I'd be happy to consider adding support.
+```ts
+// 1. Define a service that depends on a scoped variable/dependency
+class AuthService {
+  constructor(private deps: { request: Request; database: Database }) {}
+
+  // ...
+}
+
+// 2. Create a parent container - the scope will have access to all it's registered services
+const container = createIocContainer().register("database", Database);
+
+// 3. Call `container.scope` with the scope's variables/dependencies as a type param
+const requestScope = container
+  .scope<{ request: Request }>()
+  // 4. Register your service that depends on the scoped variables
+  .register("authService", AuthService);
+
+// 5. When a request comes in, call the `requestScope` function to get a container, then resolve your service
+Bun.serve({
+  fetch: (request: Request) => {
+    const requestContainer = requestScope({ request });
+    const { authService } = requestContainer.registrations;
+
+    // ...
+  },
+});
+```
 
 <br />
 
@@ -192,19 +218,19 @@ This library was heavily inspired by [Awilix](https://github.com/jeffijoe/awilix
 
 ## Feature Comparison
 
-| Feature                         |                          Zero IoC                           | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
-| ------------------------------- | :---------------------------------------------------------: | :---------------------------------------: | :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------: |
-| Decorators                      |                             ❌                              |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Require `reflect-metadata`      |                             ❌                              |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Class-based Services            |                             ✅                              |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Factory Function-based Services |                             ✅                              |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Singleton Lifetimes             |                             ✅                              |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Transient Lifetimes             |                             ✅                              |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Scoped Lifetimes                | ❌ see [#4](https://github.com/aklinker1/zero-ioc/issues/4) |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Circular Dependency Detection   |                          ✅ via TS                          |                    ❌                     |                   🟡 at runtime                   |                 🟡 at runtime                 |                    ❌                     |
-| Circular Dependency Support     |                             ❌                              |            🟡 not recommended             |                        ❌                         |                      ✅                       |                    ❌                     |
-| End-to-end Type-safety          |                             ✅                              |                    ❌                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Async Resolution                |                             🟡                              |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
-| Module loader                   |                             ❌                              |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Dependencies (Subdependencies)  |                              0                              |                  1 (18)                   |                     3 (6) + 1                     |                     1 + 1                     |                   0 + 1                   |
-| Package Size (Install Size)     |                            17 kB                            |            326.6 kB (835.6 kB)            |           32.7 kB (873.7 kB) + 241.2 kB           |        148.6 kB (182.5 kB) + 241.2 kB         |            432.8 kB + 241.2 kB            |
+| Feature                         | Zero IoC  | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
+| ------------------------------- | :-------: | :---------------------------------------: | :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------: |
+| Decorators                      |    ❌     |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Require `reflect-metadata`      |    ❌     |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Class-based Services            |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Factory Function-based Services |    ✅     |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Singleton Lifetimes             |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Transient Lifetimes             |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Scoped Lifetimes                |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Circular Dependency Detection   | ✅ via TS |                    ❌                     |                   🟡 at runtime                   |                 🟡 at runtime                 |                    ❌                     |
+| Circular Dependency Support     |    ❌     |            🟡 not recommended             |                        ❌                         |                      ✅                       |                    ❌                     |
+| End-to-end Type-safety          |    ✅     |                    ❌                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Async Resolution                |    🟡     |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
+| Module loader                   |    ❌     |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Dependencies (Subdependencies)  |     0     |                  1 (18)                   |                     3 (6) + 1                     |                     1 + 1                     |                   0 + 1                   |
+| Package Size (Install Size)     |   17 kB   |            326.6 kB (835.6 kB)            |           32.7 kB (873.7 kB) + 241.2 kB           |        148.6 kB (182.5 kB) + 241.2 kB         |            432.8 kB + 241.2 kB            |

@@ -16,11 +16,9 @@ describe("IoC Container", () => {
     type Repo = {
       list: () => string[];
     };
-    const createUserRepo = (deps: { db: Database }): Repo => {
-      return {
-        list: () => deps.db.query(),
-      };
-    };
+    const createUserRepo = (deps: { db: Database }): Repo => ({
+      list: () => deps.db.query(),
+    });
 
     const container = createIocContainer()
       .register({ db: openDatabase })
@@ -230,7 +228,7 @@ describe("IoC Container", () => {
       expect(scoped.resolve("c")).toEqual({ a, b });
     });
 
-    it("should recreate services registered to the scope for each time it is created", () => {
+    it("should recreate services registered to the scope each time the scope is created", () => {
       const a = "a";
       const createA = mock(() => a);
       const createC = mock(({ a, b }: { a: string; b: string }) => ({ a, b }));
@@ -241,12 +239,16 @@ describe("IoC Container", () => {
       const scoped2 = scope({ b: "b2" });
 
       const deps1 = scoped1.resolveAll();
-      const deps2 = scoped2.resolveAll();
+      const deps21 = scoped2.resolveAll();
+      const deps22 = scoped2.resolveAll();
 
       expect(deps1).toEqual({ a, b: "b1", c: { a, b: "b1" } });
-      expect(deps2).toEqual({ a, b: "b2", c: { a, b: "b2" } });
+      expect(deps21).toEqual({ a, b: "b2", c: { a, b: "b2" } });
+      expect(deps22).toEqual(deps21);
 
+      // Parent container deps are still singletons
       expect(createA).toBeCalledTimes(1);
+      // Scoped services are created each time the scope is created
       expect(createC).toBeCalledTimes(2);
     });
   });
