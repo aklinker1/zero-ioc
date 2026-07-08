@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 import { createIocContainer, parameterize, transient } from "..";
-import { createContainer } from "awilix";
 
 describe("IoC Container", () => {
   it("should construct a dependency tree", () => {
