@@ -18,7 +18,7 @@ deno add @aklinker1/zero-ioc
 
 ## Usage
 
-Define your services. You can use classes or factory functions:
+Define your services using classes or factory functions:
 
 - Class constructors can only accept a single argument, which is an object with the dependencies
 - Factory functions can only accept a single argument, which is an object with the dependencies
@@ -57,15 +57,18 @@ export const container = createIocContainer()
   .register("userService", UserService);
 ```
 
-And finally, to get an instance of a service from the container, use `resolve`:
+And finally, to get an instance of a service from the container, use the `resolve` method:
 
 ```ts
 const userService = container.resolve("userService");
 ```
 
-## Register Order
+> [!NOTE]
+> Services are created lazily as they are resolved.
 
-You can only call `register` with a service if you've already registered all of its dependencies. For example, if `userRepo` depends on `db`, you must register `db` **_in a separate call to `register`_** before registering `userRepo`.
+## Registration Order
+
+You can only call `register` with a service if you've registered all of its dependencies **_in separate calls to `register`_**. For example, if `userRepo` depends on `db`, you must register `db` before registering `userRepo`.
 
 The good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
 
@@ -77,10 +80,14 @@ Additionally, thanks to this type-safety, TypeScript will also report an error f
 
 To access an object containing all registered services, you have two options:
 
-1. `container.registrations`: Returns a proxy object that resolves services lazily when you access them.
+1. `container.registrations`: A proxy object that resolves services lazily when you access them.
    ```ts
+   // Destructure the services
    const { userRepo, userService } = container.registrations;
+   // Or access them directly
+   const db = container.registrations.db;
    ```
+   > This proxy is actually the same object passed into your services as the first argument of the factory function or constructor!
 2. `container.resolveAll()`: Immediately resolves all registered services and returns them as a plain object, no proxy magic. Useful when passing services to a third-party library that doesn't support proxies.
    ```ts
    const { userRepo, userService } = container.resolveAll();
@@ -115,7 +122,7 @@ const container = createIocContainer().register(
 
 ### Singleton
 
-`createIocContainer` uses singletons by default. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent calls.
+`createIocContainer` uses singletons by default. Once your service has been resolved, it will be cached and the same instance will be returned on subsequent resolutions.
 
 ```ts
 interface UserRepo {
@@ -182,7 +189,7 @@ If you need to create an instance every time, you can either:
 
 "Scoped" services are created once per "scope" - a short-lived, child container that you create from your main container to handle a single unit of work (like an incoming HTTP request).
 
-Each time you create a new scope, scoped services are re-created, but within that same scope, resolving the service multiple times will always return the same instance. This lets you provide request-specific (or otherwise scope-specific) data to your services, such as the current `Request` object.
+Within that same scope, resolving the service multiple times will always return the same instance. This lets you provide request-specific (or otherwise scope-specific) data to your services, such as the current `Request` object.
 
 Here's an example where the `Request` object is provided to a scoped service on every request:
 
@@ -214,7 +221,7 @@ Bun.serve({
 });
 ```
 
-Services registered as singletons on the parent scope are not recreated when resolved from a scope. For example, in the code above, the database class is not recreated on every request.
+Services registered as singletons on the parent container are not re-created when resolved from a scope. In the code above, the database class is not recreated on every request.
 
 As for transient services, regardless of where they are registered, on the parent container or scope, they will always be re-created when resolved.
 
