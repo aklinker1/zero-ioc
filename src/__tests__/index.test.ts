@@ -210,4 +210,45 @@ describe("IoC Container", () => {
     // @ts-expect-error: Purposefully accessing a non-existent service
     expect(services.other).toBeUndefined();
   });
+
+  describe("scopes", () => {
+    it("should resolve scope and container dependencies when a service is resolved", () => {
+      const a = "a";
+      const b = "b";
+      const c = ({ a, b }: { a: string; b: string }) => ({ a, b });
+
+      const parent = createIocContainer().register("a", () => a);
+
+      const scope = parent.scope<{ b: "b" }>().register("c", c);
+      const scoped = scope({ b });
+
+      expect(scoped.resolve("a")).toBe(a);
+      expect(scoped.resolve("b")).toBe(b);
+      expect(scoped.resolve("c")).toEqual({ a, b });
+    });
+
+    it("should recreate services registered to the scope each time the scope is created", () => {
+      const a = "a";
+      const createA = mock(() => a);
+      const createC = mock(({ a, b }: { a: string; b: string }) => ({ a, b }));
+      const container = createIocContainer().register("a", createA);
+      const scope = container.scope<{ b: string }>().register("c", createC);
+
+      const scoped1 = scope({ b: "b1" });
+      const scoped2 = scope({ b: "b2" });
+
+      const deps1 = scoped1.resolveAll();
+      const deps21 = scoped2.resolveAll();
+      const deps22 = scoped2.resolveAll();
+
+      expect(deps1).toEqual({ a, b: "b1", c: { a, b: "b1" } });
+      expect(deps21).toEqual({ a, b: "b2", c: { a, b: "b2" } });
+      expect(deps22).toEqual(deps21);
+
+      // Parent container deps are still singletons
+      expect(createA).toBeCalledTimes(1);
+      // Scoped services are created each time the scope is created
+      expect(createC).toBeCalledTimes(2);
+    });
+  });
 });

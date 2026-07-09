@@ -83,3 +83,16 @@ const containerB = createIocContainer()
   .register("userRepo", createUserRepo)
   .register("userService", createUserService);
 containerB.resolve("userService");
+
+class WithTest {
+  constructor(_: { test: string }) {}
+}
+
+const scope = containerB.scope<{ test: string }>();
+const scopeDeps = scope(
+  // @ts-expect-error: Expect "test", not "test2"
+  { test2: "" },
+)
+  .register("withTest", WithTest)
+  .resolveAll();
+const { test: _ } = scopeDeps;
