@@ -7,3 +7,5 @@
 ![Resolve Service](./resolve-service.svg)
 
 ![Resolve Transient Service](./resolve-transient-service.svg)
+
+![Startup Resolution](./startup-resolution.svg)

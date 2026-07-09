@@ -7,6 +7,7 @@ export async function defineBench(
   const bench = new Bench(options);
 
   console.log(bench.name);
+  if (options.description) console.log(options.description);
   setup(bench);
   await bench.run();
   console.table(bench.table());
