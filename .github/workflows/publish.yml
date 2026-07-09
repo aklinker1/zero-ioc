@@ -32,8 +32,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Update NPM for Provence
-        run: sudo npm i -g npm@latest
+      # - name: Update NPM for Provence
+      #   run: sudo npm i -g npm@latest
       - name: Bump and Release
         uses: aklinker1/zero-changelog/actions/release@201ada74fa1e8b0887b73f1eea6610aa57e3ef3f # v0.2.0
         with:
