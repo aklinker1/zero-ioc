@@ -245,7 +245,7 @@ This library was heavily inspired by [Awilix](https://github.com/jeffijoe/awilix
 | Async Resolution                | 🟡<sup>4</sup> |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
 | Module loader                   |       ❌       |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
 | Dependencies (Subdependencies)  |       0        |                  1 (18)                   |               3 (6) + 1<sup>5</sup>               |               1 + 1<sup>5</sup>               |             0 + 1<sup>5</sup>             |
-| Package Size (Install Size)     |     15 kB      |            326.6 kB (835.6 kB)            |     32.7 kB (873.7 kB) + 241.2 kB<sup>6</sup>     |  148.6 kB (182.5 kB) + 241.2 kB<sup>6</sup>   |      432.8 kB + 241.2 kB<sup>6</sup>      |
+| Package Size (Install Size)     |    14.4 kB     |            326.6 kB (835.6 kB)            |     32.7 kB (873.7 kB) + 241.2 kB<sup>6</sup>     |  148.6 kB (182.5 kB) + 241.2 kB<sup>6</sup>   |      432.8 kB + 241.2 kB<sup>6</sup>      |
 
 > 1. InversifyJS: [Circular dependencies are detected at runtime, and an error is thrown](https://inversify.io/docs/internals/planning/#6-validation)
 > 2. TSyringe: [Circular dependencies are detected at runtime, and an error is thrown](https://github.com/microsoft/tsyringe#circular-dependencies)

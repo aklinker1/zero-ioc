@@ -29,7 +29,7 @@
   },
   "homepage": "https://jsr.io/@aklinker1/zero-ioc",
   "repository": {
-    "url": "https://github.com/aklinker1/zero-ioc"
+    "url": "git+https://github.com/aklinker1/zero-ioc.git"
   },
   "files": [
     "dist"
