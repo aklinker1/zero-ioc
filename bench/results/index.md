@@ -9,3 +9,5 @@
 ![Resolve Transient Service](./resolve-transient-service.svg)
 
 ![Startup Resolution](./startup-resolution.svg)
+
+![Create Scope](./create-scope.svg)
