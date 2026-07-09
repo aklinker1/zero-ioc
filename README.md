@@ -18,10 +18,9 @@ deno add @aklinker1/zero-ioc
 
 ## Usage
 
-Define your services using classes or factory functions:
+Define your services using classes or factory functions.
 
-- Class constructors can only accept a single argument, which is an object with the dependencies
-- Factory functions can only accept a single argument, which is an object with the dependencies
+Both class constructors and factory functions can accept a single argument: an object containing the dependencies. Services with no dependencies can omit the parameter.
 
 ```ts
 // database.ts
@@ -68,13 +67,13 @@ const userService = container.resolve("userService");
 
 ## Registration Order
 
-You can only call `register` with a service if you've registered all of its dependencies **_in separate calls to `register`_**. For example, if `userRepo` depends on `db`, you must register `db` before registering `userRepo`.
+You can only call `register` with a service if you've registered all of its dependencies in separate calls to `register`. For example, if `userRepo` depends on `db`, you must register `db` before registering `userRepo`.
 
 The good news is TypeScript will tell you if you messed this up! If you haven't registered a dependency, you'll get a type error when you try to register the service that depends on it:
 
 <img width="500" alt="Example type error" src="https://raw.githubusercontent.com/aklinker1/zero-ioc/main/.github/dependency-type-error.png">
 
-Additionally, thanks to this type-safety, TypeScript will also report an error for circular dependencies!
+Additionally, thanks to this type safety, TypeScript will also report an error for circular dependencies!
 
 ## Access All Registered Services
 
@@ -92,31 +91,6 @@ To access an object containing all registered services, you have two options:
    ```ts
    const { userRepo, userService } = container.resolveAll();
    ```
-
-## Parameterization
-
-Sometimes you need to pass additional parameters to a service, like config, that aren't previously registered services.
-
-In this case, use `parameterize`. Any parameters passed in via the second argument don't need to be registered beforehand!
-
-```ts
-import { createIocContainer, parameterize } from "@aklinker1/zero-ioc";
-
-const openDatabase = (deps: {
-  username: string;
-  password: string;
-}): Database => {
-  // ...
-};
-
-const container = createIocContainer().register(
-  "db",
-  parameterize(openDatabase, {
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-  }),
-);
-```
 
 ## Service Lifetime
 
@@ -144,7 +118,7 @@ console.log(userRepo1 === userRepo2); // true
 
 ### Transient
 
-A "transient" service is a service that is created every time it is resolved. Use the `transient` helper to inform the container that your service should be created each time:
+A "transient" service is one that is created every time it is resolved. Use the `transient` helper to inform the container that your service should be created each time:
 
 ```ts
 import { createIocContainer, transient } from "@aklinker1/zero-ioc";
@@ -162,7 +136,7 @@ function createUserRepo(): UserRepo {
 }
 
 const container = createIocContainer().register(
-  "userRepoFactory",
+  "userRepo",
   transient(createUserRepo),
 );
 
@@ -191,7 +165,7 @@ If you need to create an instance every time, you can either:
 
 Within that same scope, resolving the service multiple times will always return the same instance. This lets you provide request-specific (or otherwise scope-specific) data to your services, such as the current `Request` object.
 
-Here's an example where the `Request` object is provided to a scoped service on every request:
+Here's an example where the `Request` object from Bun's HTTP server is injected into a scoped service on every request:
 
 ```ts
 // 1. Define a service that depends on a scoped variable/dependency
@@ -201,7 +175,7 @@ class AuthService {
   // ...
 }
 
-// 2. Create a parent container - the scope will have access to all it's registered services
+// 2. Create a parent container - the scope will have access to all its registered services
 const container = createIocContainer().register("database", Database);
 
 // 3. Call `container.scope` with the scope's variables/dependencies as a type param
@@ -225,7 +199,30 @@ Services registered as singletons on the parent container are not re-created whe
 
 As for transient services, regardless of where they are registered, on the parent container or scope, they will always be re-created when resolved.
 
-<br />
+## Parameterization
+
+Sometimes you need to pass additional parameters to a service, like config, that aren't themselves registered services.
+
+In this case, use `parameterize`. Any parameters passed in via the second argument don't need to be registered beforehand!
+
+```ts
+import { createIocContainer, parameterize } from "@aklinker1/zero-ioc";
+
+const openDatabase = (deps: {
+  username: string;
+  password: string;
+}): Database => {
+  // ...
+};
+
+const container = createIocContainer().register(
+  "db",
+  parameterize(openDatabase, {
+    username: process.env.DB_USERNAME!,
+    password: process.env.DB_PASSWORD!,
+  }),
+);
+```
 
 ## Inspiration
 
@@ -247,10 +244,12 @@ This library was heavily inspired by [Awilix](https://github.com/jeffijoe/awilix
 | End-to-end Type-safety          |       ✅       |                    ❌                     |                        ❌                         |                      ❌                       |                    ❌                     |
 | Async Resolution                | 🟡<sup>4</sup> |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
 | Module loader                   |       ❌       |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Dependencies (Subdependencies)  |       0        |                  1 (18)                   |                     3 (6) + 1                     |                     1 + 1                     |                   0 + 1                   |
-| Package Size (Install Size)     |     15 kB      |            326.6 kB (835.6 kB)            |           32.7 kB (873.7 kB) + 241.2 kB           |        148.6 kB (182.5 kB) + 241.2 kB         |            432.8 kB + 241.2 kB            |
+| Dependencies (Subdependencies)  |       0        |                  1 (18)                   |               3 (6) + 1<sup>5</sup>               |               1 + 1<sup>5</sup>               |             0 + 1<sup>5</sup>             |
+| Package Size (Install Size)     |     15 kB      |            326.6 kB (835.6 kB)            |     32.7 kB (873.7 kB) + 241.2 kB<sup>6</sup>     |  148.6 kB (182.5 kB) + 241.2 kB<sup>6</sup>   |      432.8 kB + 241.2 kB<sup>6</sup>      |
 
 > 1. InversifyJS: [Circular dependencies are detected at runtime, and an error is thrown](https://inversify.io/docs/internals/planning/#6-validation)
 > 2. TSyringe: [Circular dependencies are detected at runtime, and an error is thrown](https://github.com/microsoft/tsyringe#circular-dependencies)
 > 3. Awilix: [The proxy injection mode can support circular dependencies, but it's not recommended](https://github.com/jeffijoe/awilix#injection-modes)
-> 4. Zero IoC: You can use async factory functions, but no promises are awaited automatically. Dependant services should require a `Promise<Service>` instead of just `Service` in it's dependencies.
+> 4. Zero IoC: You can use async factory functions, but no promises are awaited automatically. Dependent services should require a `Promise<Service>` instead of just `Service` in their dependencies.
+> 5. "+ 1" dependency for `reflect-metadata` peer
+> 6. "+ 241.2 kB" install size for `reflect-metadata` peer
