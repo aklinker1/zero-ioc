@@ -6,7 +6,8 @@
   "scripts": {
     "test": "bun test --watch",
     "build": "tsdown src/index.ts",
-    "bench": "bun run bench/index.ts"
+    "bench": "bun run bench/index.ts",
+    "prepack": "bun run build"
   },
   "devDependencies": {
     "@aklinker1/check": "^2.2.0",

@@ -1,12 +1,21 @@
 name: Publish
 on:
   workflow_dispatch:
+    inputs:
+      bump:
+        description: Blank (auto), a version (1.4.1), or major/minor/patch
+        type: string
+      dryRun:
+        description: Dry Run?
+        type: boolean
+        default: false
 
 jobs:
   validate:
     name: Validate
     uses: "./.github/workflows/validate.yml"
     secrets: inherit
+
   publish:
     name: Publish
     runs-on: ubuntu-24.04
@@ -19,22 +28,25 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
-      - run: sudo npm i -g npm@latest
-      - run: bun run build
-      - run: bunx jsr publish --dry-run
-      # - run: npm publish --dry-run # NPM fails with " npm error You cannot publish over the previously published versions: X.Y.Z."
-      - run: |
+      - name: Setup Git
+        run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      - run: bunx changelogen@latest --release --push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: npm publish
-      - name: Sync JSR version
-        run: |
-          node -e 'const fs = require("fs"); const ver = require("./package.json").version; let content = fs.readFileSync("jsr.json", "utf8"); fs.writeFileSync("jsr.json", content.replace(/(version"\s*:\s*")[^"]*(")/, `$1${ver}$2`))'
-          git add jsr.json
-          git commit -m "sync \`jsr.json\` version"
-          git push
-      - run: bunx jsr publish
+      - name: Update NPM for Provence
+        run: sudo npm i -g npm@latest
+      - name: Bump and Release
+        uses: aklinker1/zero-changelog/actions/release@201ada74fa1e8b0887b73f1eea6610aa57e3ef3f # v0.2.0
+        with:
+          bump: ${{ inputs.bump }}
+          publishCommands: |-
+            mv README.md GITHUB-README.md
+            mv NPM-README.md README.md
+            npm publish
+            mv README.md NPM-README.md
+            mv GITHUB-README.md README.md
+            bunx jsr publish --allow-dirty
+          dryRun: ${{ inputs.dryRun }}
+          dryRunPublishCommands: |-
+            npm publish --dry-run
+            bunx jsr publish --dry-run --allow-dirty
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
