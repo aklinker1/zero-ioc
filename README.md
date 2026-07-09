@@ -178,9 +178,11 @@ If you need to create an instance every time, you can either:
 
 ### Scoped
 
-"Scoped" services are services that are created once per "scope".
+"Scoped" services are created once per "scope" - a short-lived, child container that you create from your main container to handle a single unit of work (like an incoming HTTP request).
 
-These are really good for HTTP servers where a service may depend on the `Request` object, and you want to create a new instance of the service on every request:
+Each time you create a new scope, scoped services are re-created, but within that same scope, resolving the service multiple times will always return the same instance. This lets you provide request-specific (or otherwise scope-specific) data to your services, such as the current `Request` object.
+
+Here's an example where the `Request` object is provided to a scoped service on every request:
 
 ```ts
 // 1. Define a service that depends on a scoped variable/dependency
@@ -210,6 +212,10 @@ Bun.serve({
 });
 ```
 
+Services registered as singletons on the parent scope are not recreated when resolved from a scope. For example, in the code above, the database class is not recreated on every request.
+
+As for transient services, regardless of where they are registered, on the parent container or scope, they will always be re-created when resolved.
+
 <br />
 
 ## Inspiration
@@ -218,19 +224,24 @@ This library was heavily inspired by [Awilix](https://github.com/jeffijoe/awilix
 
 ## Feature Comparison
 
-| Feature                         | Zero IoC  | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
-| ------------------------------- | :-------: | :---------------------------------------: | :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------: |
-| Decorators                      |    ❌     |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Require `reflect-metadata`      |    ❌     |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Class-based Services            |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Factory Function-based Services |    ✅     |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Singleton Lifetimes             |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Transient Lifetimes             |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Scoped Lifetimes                |    ✅     |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
-| Circular Dependency Detection   | ✅ via TS |                    ❌                     |                   🟡 at runtime                   |                 🟡 at runtime                 |                    ❌                     |
-| Circular Dependency Support     |    ❌     |            🟡 not recommended             |                        ❌                         |                      ✅                       |                    ❌                     |
-| End-to-end Type-safety          |    ✅     |                    ❌                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Async Resolution                |    🟡     |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
-| Module loader                   |    ❌     |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
-| Dependencies (Subdependencies)  |     0     |                  1 (18)                   |                     3 (6) + 1                     |                     1 + 1                     |                   0 + 1                   |
-| Package Size (Install Size)     |   17 kB   |            326.6 kB (835.6 kB)            |           32.7 kB (873.7 kB) + 241.2 kB           |        148.6 kB (182.5 kB) + 241.2 kB         |            432.8 kB + 241.2 kB            |
+| Feature                         |    Zero IoC    | [Awilix](https://npmx.dev/package/awilix) | [InversifyJS](https://npmx.dev/package/inversify) | [TSyringe](https://npmx.dev/package/tsyringe) | [TypeDI](https://npmx.dev/package/typedi) |
+| ------------------------------- | :------------: | :---------------------------------------: | :-----------------------------------------------: | :-------------------------------------------: | :---------------------------------------: |
+| Decorators                      |       ❌       |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Require `reflect-metadata`      |       ❌       |                    ❌                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Class-based Services            |       ✅       |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Factory Function-based Services |       ✅       |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Singleton Lifetimes             |       ✅       |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Transient Lifetimes             |       ✅       |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Scoped Lifetimes                |       ✅       |                    ✅                     |                        ✅                         |                      ✅                       |                    ✅                     |
+| Circular Dependency Detection   |   ✅ via TS    |                    ❌                     |                  🟡<sup>1</sup>                   |                🟡<sup>2</sup>                 |                    ❌                     |
+| Circular Dependency Support     |       ❌       |              🟡<sup>3</sup>               |                        ❌                         |                      ✅                       |                    ❌                     |
+| End-to-end Type-safety          |       ✅       |                    ❌                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Async Resolution                | 🟡<sup>4</sup> |          ✅ via `awilix-manager`          |                        ✅                         |                      ❌                       |                    ❌                     |
+| Module loader                   |       ❌       |                    ✅                     |                        ❌                         |                      ❌                       |                    ❌                     |
+| Dependencies (Subdependencies)  |       0        |                  1 (18)                   |                     3 (6) + 1                     |                     1 + 1                     |                   0 + 1                   |
+| Package Size (Install Size)     |     25 kB      |            326.6 kB (835.6 kB)            |           32.7 kB (873.7 kB) + 241.2 kB           |        148.6 kB (182.5 kB) + 241.2 kB         |            432.8 kB + 241.2 kB            |
+
+> 1. InversifyJS: [Circular dependencies are detected at runtime, and an error is thrown](https://inversify.io/docs/internals/planning/#6-validation)
+> 2. TSyringe: [Circular dependencies are detected at runtime, and an error is thrown](https://github.com/microsoft/tsyringe#circular-dependencies)
+> 3. Awilix: [The proxy injection mode can support circular dependencies, but it's not recommended](https://github.com/jeffijoe/awilix#injection-modes)
+> 4. Zero IoC: You can use async factory functions, but no promises are awaited automatically. Dependant services should require a `Promise<Service>` instead of just `Service` in it's dependencies.
